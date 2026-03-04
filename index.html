@@ -3,73 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v1.6</title>
+    <title>Trigger Voca 5.0</title>
     <style>
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
-        body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         #app { width: 90%; max-width: 400px; text-align: center; }
-        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; }
-        .tab-btn { flex: 1; padding: 15px; border-radius: 12px; border: 2px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 1.1rem; color: #666; }
-        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-        .card { background: white; padding: 50px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); position: relative; margin-bottom: 20px; }
-        .word { font-size: 3.5rem; font-weight: 800; margin: 0; color: #1a1a1a; }
-        .meaning { font-size: 1.8rem; color: #666; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
-        .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
-        #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; }
-        button#action-btn { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; width: 100%; cursor: pointer; }
+        .view { display: none; }
+        .view.active { display: block; }
+        .card { background: white; padding: 40px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); position: relative; margin-bottom: 20px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         button:disabled { background: #bbb !important; cursor: not-allowed; }
-        #cooldown-info { margin-top: 15px; color: #e53935; font-weight: bold; font-size: 0.9rem; }
+        .student-btn { background: white; color: #333; border: 2px solid #ddd; }
+        .student-btn:hover { border-color: var(--primary); }
+        .word { font-size: 3.2rem; font-weight: 800; margin: 0; }
+        .meaning { font-size: 1.6rem; color: #666; opacity: 0.1; margin: 10px 0; transition: 0.4s; }
+        .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.05); }
+        #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; }
+        .nav-link { font-size: 0.8rem; color: #888; text-decoration: underline; cursor: pointer; margin-top: 20px; display: inline-block; }
     </style>
 </head>
 <body>
     <div id="app">
-        <div class="tab-menu">
-            <button id="btn-middle" class="tab-btn active" onclick="setMode('middle')">중등</button>
-            <button id="btn-high" class="tab-btn" onclick="setMode('high')">고등</button>
+        <div id="view-login" class="view active">
+            <h2 style="margin-bottom:30px;">학생을 선택하세요</h2>
+            <div id="student-list" class="btn-grid"></div>
         </div>
-        <div class="card">
-            <div id="timer-bar"></div>
-            <p id="progress-text" style="color:#aaa; font-weight:bold; margin-bottom:10px;">준비 완료</p>
-            <h1 class="word" id="display-word">Trigger</h1>
-            <div id="meaning-container"></div>
+
+        <div id="view-mode" class="view">
+            <h2 id="welcome-msg">님, 환영합니다!</h2>
+            <div class="btn-grid">
+                <button onclick="setMode('middle')">중등 코스</button>
+                <button onclick="setMode('high')" style="background:#2196F3">고등 코스</button>
+            </div>
+            <p class="nav-link" onclick="showView('view-login')">학생 변경하기</p>
         </div>
-        <button id="action-btn" onclick="runSession()">학습 시작</button>
-        <p id="cooldown-info"></p>
-        <p onclick="localStorage.clear(); location.reload();" style="font-size:10px; color:#ccc; cursor:pointer; margin-top:30px;">초기화(테스트용)</p>
+
+        <div id="view-study" class="view">
+            <div class="card">
+                <div id="timer-bar"></div>
+                <p id="progress-text" style="color:#aaa; font-weight:bold;">준비 완료</p>
+                <h1 class="word" id="display-word">Trigger</h1>
+                <div id="meaning-container"></div>
+            </div>
+            <button id="action-btn" onclick="runSession()">학습 시작</button>
+            <p id="cooldown-info" style="margin-top:15px; color:#e53935; font-weight:bold;"></p>
+            <p id="session-count" style="font-size:0.9rem; color:#666;"></p>
+            <p class="nav-link" onclick="showView('view-mode')">뒤로 가기</p>
+        </div>
     </div>
 
     <script>
-        // [cite: 2026-03-04] 중등/고등 각 7일치 (총 420단어) 데이터베이스
-const wordLib = {
-    middle: {
-        "Day 1": [ {word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"}, /* ... 30개 */ ],
-        "Day 2": [ /* ... 기초 타동사 30개 */ ],
-        // Day 7까지 동일 구조 [cite: 2026-03-04]
-    },
-    high: {
-        "Day 1": [ {word:"acknowledge", meanings:["인정하다", "감사하다"], color:"#FFF3E0"}, /* ... 30개 */ ],
-        // Day 7까지 동일 구조 [cite: 2026-03-04]
-    }
-};
+        // 학생 명단
+        const students = ["찬영", "강인", "채원", "승원", "단우", "고은", "종우", "민준"];
+        
+        // 데이터셋 (Day 1 샘플) [cite: 2026-03-04]
+        const wordLib = {
+            middle: [
+                {word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"},
+                {word:"happen", meanings:["일어나다", "발생하다"], color:"#E8F5E9"},
+                {word:"stay", meanings:["머무르다"], color:"#E8F5E9"}
+            ],
+            high: [
+                {word:"analyze", meanings:["분석하다"], color:"#FFF3E0"},
+                {word:"assume", meanings:["가정하다"], color:"#FFF3E0"},
+                {word:"confirm", meanings:["확인하다"], color:"#FFF3E0"}
+            ]
+        };
 
-        let currentMode = 'middle';
-        function setMode(m) {
-            currentMode = m;
-            document.getElementById('btn-middle').classList.toggle('active', m === 'middle');
-            document.getElementById('btn-high').classList.toggle('active', m === 'high');
-            document.getElementById('display-word').innerText = "Trigger";
-            document.getElementById('meaning-container').innerHTML = "";
+        let currentStudent = "";
+        let currentMode = "";
+
+        // 1. 초기 화면 구성
+        function init() {
+            const list = document.getElementById('student-list');
+            list.innerHTML = students.map(s => `<button class="student-btn" onclick="login('${s}')">${s}</button>`).join('');
         }
 
+        // 2. 로그인 및 데이터 로드
+        function login(name) {
+            currentStudent = name;
+            document.getElementById('welcome-msg').innerText = `${name} 학생, 환영합니다!`;
+            showView('view-mode');
+        }
+
+        function setMode(mode) {
+            currentMode = mode;
+            showView('view-study');
+            checkCooldown();
+        }
+
+        function showView(id) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // 3. 학습 로직
         async function runSession() {
-            document.getElementById('action-btn').disabled = true;
+            const btn = document.getElementById('action-btn');
+            btn.disabled = true;
+            
             const words = wordLib[currentMode];
             for(let i=0; i < words.length; i++) {
-                await showWord(words[i], i + 1, words.length);
+                await showWord(words[i], i+1, words.length);
             }
-            // 세션 종료 후 쿨타임 기록 [cite: 2026-03-04]
-            localStorage.setItem('tv_last_time', Date.now());
-            alert("세션 종료! 10분 휴식 후 다음 학습이 가능합니다.");
+
+            // 학생별 데이터 저장 [cite: 2026-03-04]
+            const now = Date.now();
+            const stats = JSON.parse(localStorage.getItem(`tv_${currentStudent}`) || '{"sessions":0, "lastTime":0}');
+            stats.sessions += 1;
+            stats.lastTime = now;
+            localStorage.setItem(`tv_${currentStudent}`, JSON.stringify(stats));
+
+            alert(`세션 완료! (오늘 ${stats.sessions}번째) 10분간 휴식하세요.`); [cite: 2026-03-04]
             checkCooldown();
         }
 
@@ -80,40 +126,42 @@ const wordLib = {
                 document.body.style.backgroundColor = data.color;
                 const container = document.getElementById('meaning-container');
                 container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
-                
                 const bar = document.getElementById('timer-bar');
                 bar.style.transition = 'none'; bar.style.width = '0%';
                 setTimeout(() => { bar.style.transition = 'width 6000ms linear'; bar.style.width = '100%'; }, 50);
-
                 const elements = document.querySelectorAll('.meaning');
                 elements.forEach((el, i) => {
                     setTimeout(() => {
                         elements.forEach(e => e.classList.remove('active'));
                         el.classList.add('active');
-                    }, i * (6000 / data.meanings.length)); // 6초 주입 원칙
+                    }, i * (6000 / data.meanings.length));
                 });
-                setTimeout(resolve, 6000);
+                setTimeout(resolve, 6000); // 6초 주입 원칙 [cite: 2026-03-04]
             });
         }
 
         function checkCooldown() {
-            const last = localStorage.getItem('tv_last_time');
-            if (last) {
-                const diff = Date.now() - parseInt(last);
-                const cooldownMs = 10 * 60 * 1000;
-                if (diff < cooldownMs) {
-                    document.getElementById('action-btn').disabled = true;
-                    const remain = Math.ceil((cooldownMs - diff) / 1000);
-                    document.getElementById('cooldown-info').innerText = `휴식 중: ${Math.floor(remain/60)}분 ${remain%60}초 남음`;
-                    setTimeout(checkCooldown, 1000);
-                    return;
-                }
+            const stats = JSON.parse(localStorage.getItem(`tv_${currentStudent}`) || '{"sessions":0, "lastTime":0}');
+            document.getElementById('session-count').innerText = `오늘의 진행도: ${stats.sessions} / 5 세션`;
+            
+            const diff = Date.now() - stats.lastTime;
+            const cooldownMs = 10 * 60 * 1000;
+            
+            if (diff < cooldownMs && stats.sessions > 0) {
+                document.getElementById('action-btn').disabled = true;
+                const remain = Math.ceil((cooldownMs - diff) / 1000);
+                document.getElementById('cooldown-info').innerText = `휴식 중: ${Math.floor(remain/60)}분 ${remain%60}초 남음`;
+                setTimeout(checkCooldown, 1000);
+            } else if (stats.sessions >= 5) {
+                document.getElementById('action-btn').disabled = true;
+                document.getElementById('cooldown-info').innerText = "🎉 오늘 학습 완료! 내일 만나요."; [cite: 2026-03-04]
+            } else {
+                document.getElementById('action-btn').disabled = false;
+                document.getElementById('cooldown-info').innerText = "";
             }
-            document.getElementById('action-btn').disabled = false;
-            document.getElementById('cooldown-info').innerText = "";
         }
 
-        window.onload = checkCooldown;
+        init();
     </script>
 </body>
 </html>
