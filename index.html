@@ -2,37 +2,117 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>Trigger Voca v1.0</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trigger Voca v1.1</title>
     <style>
-        body { display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; transition: background 0.5s; font-family: sans-serif; }
-        #word-card { text-align: center; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); background: white; width: 300px; }
-        .word { font-size: 3rem; font-weight: bold; }
-        .meaning { font-size: 1.5rem; opacity: 0.2; transition: all 0.3s; margin: 10px 0; }
-        .meaning.active { opacity: 1; transform: scale(1.2); font-weight: bold; color: #000; }
+        :root { --primary: #4CAF50; --bg: #f0f2f5; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        #app { width: 90%; max-width: 400px; text-align: center; }
+        .card { background: white; padding: 50px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); position: relative; }
+        .word { font-size: 3.5rem; font-weight: 800; margin: 0; color: #1a1a1a; }
+        .meaning { font-size: 1.8rem; color: #666; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
+        .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
+        #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; transition: none; }
+        button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; width: 100%; margin-top: 20px; box-shadow: 0 5px 15px rgba(76,175,80,0.3); }
+        button:disabled { background: #bbb; box-shadow: none; }
+        #info { margin-top: 15px; color: #888; font-size: 0.9rem; }
     </style>
 </head>
 <body>
-    <div id="word-card">
-        <div class="word" id="display-word">appear</div>
-        <div id="meaning-container"></div>
+    <div id="app">
+        <div class="card">
+            <div id="timer-bar"></div>
+            <p id="progress-text" style="color:#aaa; font-weight:bold; margin-bottom:10px;">준비 완료</p>
+            <h1 class="word" id="display-word">Trigger</h1>
+            <div id="meaning-container"></div>
+        </div>
+        <button id="action-btn" onclick="runTriggerVoca()">학습 시작</button>
+        <p id="info"></p>
     </div>
+
     <script>
-        const data = { word: "appear", meanings: ["나타나다", "보이다"], color: "#E8F5E9" };
-        function start() {
+        // 1. 단어 데이터 (중등 Day 1 샘플) [cite: 2026-03-04]
+        const wordData = [
+            { word: "appear", meanings: ["나타나다", "보이다"], color: "#E8F5E9" },
+            { word: "happen", meanings: ["일어나다", "발생하다"], color: "#E3F2FD" },
+            { word: "stay", meanings: ["머무르다", "유지하다"], color: "#FFF3E0" }
+        ];
+
+        let currentWordIndex = 0;
+        const INJECTION_TIME = 6000; // 6초 강제 주입 [cite: 2026-03-04]
+
+        function runTriggerVoca() {
+            document.getElementById('action-btn').disabled = true;
+            currentWordIndex = 0;
+            showNextWord();
+        }
+
+        function showNextWord() {
+            if (currentWordIndex >= wordData.length) {
+                finishSession();
+                return;
+            }
+
+            const data = wordData[currentWordIndex];
             document.getElementById('display-word').innerText = data.word;
+            document.getElementById('progress-text').innerText = `${currentWordIndex + 1} / ${wordData.length} 단어 주입 중`;
             document.body.style.backgroundColor = data.color;
+
+            // 뜻 생성
             const container = document.getElementById('meaning-container');
             container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
+            
+            // 타이머 바 초기화 및 시작
+            const bar = document.getElementById('timer-bar');
+            bar.style.transition = 'none';
+            bar.style.width = '0%';
+            setTimeout(() => {
+                bar.style.transition = `width ${INJECTION_TIME}ms linear`;
+                bar.style.width = '100%';
+            }, 50);
+
+            // 뜻 하이라이트 로직
             const elements = document.querySelectorAll('.meaning');
+            const highlightInterval = INJECTION_TIME / data.meanings.length;
+
             elements.forEach((el, i) => {
                 setTimeout(() => {
                     elements.forEach(e => e.classList.remove('active'));
                     el.classList.add('active');
-                }, i * (6000 / data.meanings.length));
+                }, i * highlightInterval);
             });
-            setTimeout(start, 6000);
+
+            // 6초 후 다음 단어로 [cite: 2026-03-04]
+            setTimeout(() => {
+                currentWordIndex++;
+                showNextWord();
+            }, INJECTION_TIME);
         }
-        window.onload = start;
+
+        function finishSession() {
+            document.getElementById('display-word').innerText = "DONE!";
+            document.getElementById('meaning-container').innerHTML = "세션이 종료되었습니다.";
+            document.getElementById('progress-text').innerText = "학습 완료";
+            
+            // 쿨타임 기록 (서버 대신 로컬 저장소) [cite: 2026-03-04]
+            localStorage.setItem('tv_last_time', Date.now());
+            alert("수고하셨습니다! 10분 쿨타임이 시작됩니다."); [cite: 2026-03-04]
+            location.reload(); // 상태 업데이트를 위해 새로고침
+        }
+
+        // 페이지 로드 시 쿨타임 체크 [cite: 2026-03-04]
+        window.onload = () => {
+            const lastTime = localStorage.getItem('tv_last_time');
+            if (lastTime) {
+                const diff = Date.now() - parseInt(lastTime);
+                if (diff < 10 * 60 * 1000) { // 10분 미경과 시 [cite: 2026-03-04]
+                    document.getElementById('action-btn').disabled = true;
+                    const remain = Math.ceil((10 * 60 * 1000 - diff) / 1000);
+                    document.getElementById('info').innerText = `휴식 중입니다. (${Math.floor(remain/60)}분 ${remain%60}초 남음)`;
+                    setTimeout(() => location.reload(), 1000);
+                }
+            }
+        };
     </script>
 </body>
 </html>
