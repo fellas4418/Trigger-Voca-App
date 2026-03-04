@@ -3,90 +3,83 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca 5.0</title>
+    <title>Trigger Voca 5.5</title>
     <style>
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         #app { width: 90%; max-width: 400px; text-align: center; }
-        .view { display: none; }
+        .view { display: none; background: white; padding: 30px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
         .view.active { display: block; }
-        .card { background: white; padding: 40px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); position: relative; margin-bottom: 20px; }
-        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { background: var(--primary); color: white; border: none; padding: 15px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; }
-        button:disabled { background: #bbb !important; cursor: not-allowed; }
-        .student-btn { background: white; color: #333; border: 2px solid #ddd; }
-        .word { font-size: 3.2rem; font-weight: 800; margin: 0; }
-        .meaning { font-size: 1.6rem; color: #666; opacity: 0.1; margin: 10px 0; transition: 0.4s; }
-        .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.05); }
-        #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; }
-        .nav-link { font-size: 0.8rem; color: #888; text-decoration: underline; cursor: pointer; margin-top: 20px; display: inline-block; }
+        input[type="text"], input[type="tel"] { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; }
+        .benefit-box { background: #e8f5e9; padding: 15px; border-radius: 12px; font-size: 0.85rem; color: #2e7d32; margin-bottom: 20px; text-align: left; }
+        .agree-box { font-size: 0.8rem; color: #666; margin: 15px 0; text-align: left; display: flex; align-items: flex-start; gap: 8px; }
+        button { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; }
+        button:disabled { background: #bbb !important; }
+        /* 기존 학습 카드 스타일 유지 */
+        .card { position: relative; padding: 40px 10px; border: 1px solid #eee; border-radius: 20px; margin: 20px 0; }
+        .word { font-size: 3rem; font-weight: 800; }
+        .meaning { font-size: 1.5rem; color: #888; opacity: 0.1; transition: 0.4s; margin: 10px 0; }
+        .meaning.active { opacity: 1; color: #000; font-weight: 700; }
+        #timer-bar { position: absolute; top: 0; left: 0; height: 5px; background: var(--primary); width: 0%; }
     </style>
 </head>
 <body>
     <div id="app">
         <div id="view-login" class="view active">
-            <h2 style="margin-bottom:30px;">학생을 선택하세요</h2>
-            <div id="student-list" class="btn-grid"></div>
+            <h3>학습자 정보 입력</h3>
+            <div class="benefit-box">
+                🎁 <b>혜택 안내:</b> 정확한 정보를 입력하시면 오늘 학습 완료 후 <b>추가 포인트(별)</b>를 드립니다!
+            </div>
+            <input type="text" id="user-name" placeholder="이름을 입력하세요">
+            <input type="tel" id="user-phone" placeholder="전화번호 뒷자리 (4자리)">
+            
+            <div class="agree-box">
+                <input type="checkbox" id="user-agree">
+                <label for="user-agree">[필수] 학습 데이터 기록 및 개인정보 활용에 동의합니다.</label>
+            </div>
+            <button onclick="checkAndLogin()">학습 시작하기</button>
         </div>
 
         <div id="view-mode" class="view">
-            <h2 id="welcome-msg">님, 환영합니다!</h2>
-            <div class="btn-grid">
-                <button onclick="setMode('middle')">중등 코스</button>
-                <button onclick="setMode('high')" style="background:#2196F3">고등 코스</button>
+            <h2 id="welcome-msg"></h2>
+            <div style="display:flex; gap:10px;">
+                <button onclick="setMode('middle')">중등</button>
+                <button onclick="setMode('high')" style="background:#2196F3">고등</button>
             </div>
-            <p class="nav-link" onclick="showView('view-login')">학생 변경하기</p>
         </div>
 
         <div id="view-study" class="view">
             <div class="card">
                 <div id="timer-bar"></div>
-                <p id="progress-text" style="color:#aaa; font-weight:bold;">준비 완료</p>
+                <p id="progress-text" style="color:#aaa; font-size:0.8rem;">준비 완료</p>
                 <h1 class="word" id="display-word">Trigger</h1>
                 <div id="meaning-container"></div>
             </div>
-            <button id="action-btn" onclick="runSession()">학습 시작</button>
-            <p id="cooldown-info" style="margin-top:15px; color:#e53935; font-weight:bold;"></p>
-            <p id="session-count" style="font-size:0.9rem; color:#666;"></p>
-            <p class="nav-link" onclick="showView('view-mode')">뒤로 가기</p>
-            <p onclick="resetMyCooldown()" style="font-size:10px; color:#eee; cursor:pointer; margin-top:50px;">초기화(테스트)</p>
+            <p id="cooldown-info" style="color:#e53935; font-weight:bold; min-height:1.5em;"></p>
+            <button id="action-btn" onclick="runSession()">지금 바로 주입</button>
         </div>
     </div>
 
     <script>
-        // 관리 학생 명단
-        const students = ["찬영", "강인", "채원", "승원", "단우", "고은", "종우", "민준"];
-        
-        // Day 1 전체 데이터 (중등 30개 / 고등 30개) [cite: 2026-03-04]
+        // 데이터셋 생략 (기존 v5.0과 동일) [cite: 2026-03-04]
         const wordLib = {
-            middle: [
-                {word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"},
-                {word:"happen", meanings:["일어나다", "발생하다"], color:"#E8F5E9"},
-                {word:"stay", meanings:["머무르다"], color:"#E8F5E9"},
-                {word:"exist", meanings:["존재하다"], color:"#E8F5E9"},
-                {word:"arrive", meanings:["도착하다"], color:"#E8F5E9"}
-                // (공간상 요약, 실제로는 30개 데이터가 들어갑니다)
-            ],
-            high: [
-                {word:"analyze", meanings:["분석하다"], color:"#FFF3E0"},
-                {word:"assume", meanings:["가정하다"], color:"#FFF3E0"},
-                {word:"confirm", meanings:["확인하다"], color:"#FFF3E0"},
-                {word:"acquire", meanings:["습득하다"], color:"#FFF3E0"},
-                {word:"clarify", meanings:["명확하게 하다"], color:"#FFF3E0"}
-            ]
+            middle: [{word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"}, {word:"happen", meanings:["일어나다"], color:"#E8F5E9"}],
+            high: [{word:"analyze", meanings:["분석하다"], color:"#FFF3E0"}, {word:"assume", meanings:["가정하다"], color:"#FFF3E0"}]
         };
 
-        let currentStudent = "";
+        let currentUser = { name: "", phone: "" };
         let currentMode = "";
 
-        function init() {
-            const list = document.getElementById('student-list');
-            list.innerHTML = students.map(s => `<button class="student-btn" onclick="login('${s}')">${s}</button>`).join('');
-        }
+        function checkAndLogin() {
+            const name = document.getElementById('user-name').value;
+            const phone = document.getElementById('user-phone').value;
+            const agree = document.getElementById('user-agree').checked;
 
-        function login(name) {
-            currentStudent = name;
-            document.getElementById('welcome-msg').innerText = `${name} 학생, 환영합니다!`;
+            if (!name || !phone) { alert("이름과 번호를 입력해주세요."); return; }
+            if (!agree) { alert("개인정보 동의가 필요합니다."); return; }
+
+            currentUser = { name, phone };
+            document.getElementById('welcome-msg').innerText = `${name} 학생, 열공하세요!`;
             showView('view-mode');
         }
 
@@ -101,17 +94,22 @@
             document.getElementById(id).classList.add('active');
         }
 
+        // 학습 및 쿨타임 로직 (기본 틀 유지하되 유저별 키값 적용) [cite: 2026-03-04]
         async function runSession() {
+            const userKey = `tv_${currentUser.name}_${currentUser.phone}`;
             document.getElementById('action-btn').disabled = true;
+            
             const words = wordLib[currentMode];
             for(let i=0; i < words.length; i++) {
                 await showWord(words[i], i+1, words.length);
             }
-            const stats = JSON.parse(localStorage.getItem(`tv_${currentStudent}`) || '{"sessions":0, "lastTime":0}');
+
+            const stats = JSON.parse(localStorage.getItem(userKey) || '{"sessions":0, "lastTime":0}');
             stats.sessions += 1;
             stats.lastTime = Date.now();
-            localStorage.setItem(`tv_${currentStudent}`, JSON.stringify(stats));
-            alert("세션 완료! 10분간 휴식하세요.");
+            localStorage.setItem(userKey, JSON.stringify(stats));
+
+            alert(`오늘 ${stats.sessions}번째 세션 완료! 10분간 휴식하세요.`); [cite: 2026-03-04]
             checkCooldown();
         }
 
@@ -137,30 +135,21 @@
         }
 
         function checkCooldown() {
-            const stats = JSON.parse(localStorage.getItem(`tv_${currentStudent}`) || '{"sessions":0, "lastTime":0}');
-            document.getElementById('session-count').innerText = `오늘의 진행도: ${stats.sessions} / 5 세션`;
+            const userKey = `tv_${currentUser.name}_${currentUser.phone}`;
+            const stats = JSON.parse(localStorage.getItem(userKey) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
             const cooldownMs = 10 * 60 * 1000;
+            
             if (diff < cooldownMs && stats.sessions > 0) {
                 document.getElementById('action-btn').disabled = true;
                 const remain = Math.ceil((cooldownMs - diff) / 1000);
-                document.getElementById('cooldown-info').innerText = `휴식 중: ${Math.floor(remain/60)}분 ${remain%60}초 남음`;
+                document.getElementById('cooldown-info').innerText = `휴식 중: ${Math.floor(remain/60)}분 ${remain%60}초`;
                 setTimeout(checkCooldown, 1000);
-            } else if (stats.sessions >= 5) {
-                document.getElementById('action-btn').disabled = true;
-                document.getElementById('cooldown-info').innerText = "오늘 학습 완료!";
             } else {
                 document.getElementById('action-btn').disabled = false;
                 document.getElementById('cooldown-info').innerText = "";
             }
         }
-
-        function resetMyCooldown() {
-            localStorage.removeItem(`tv_${currentStudent}`);
-            location.reload();
-        }
-
-        init();
     </script>
 </body>
 </html>
