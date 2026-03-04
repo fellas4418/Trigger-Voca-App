@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Trigger Voca v1.0</title>
+    <style>
+        body { display: flex; align-items: center; justify-content: center; height: 100vh; margin: 0; transition: background 0.5s; font-family: sans-serif; }
+        #word-card { text-align: center; padding: 40px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); background: white; width: 300px; }
+        .word { font-size: 3rem; font-weight: bold; }
+        .meaning { font-size: 1.5rem; opacity: 0.2; transition: all 0.3s; margin: 10px 0; }
+        .meaning.active { opacity: 1; transform: scale(1.2); font-weight: bold; color: #000; }
+    </style>
+</head>
+<body>
+    <div id="word-card">
+        <div class="word" id="display-word">appear</div>
+        <div id="meaning-container"></div>
+    </div>
+    <script>
+        const data = { word: "appear", meanings: ["나타나다", "보이다"], color: "#E8F5E9" };
+        function start() {
+            document.getElementById('display-word').innerText = data.word;
+            document.body.style.backgroundColor = data.color;
+            const container = document.getElementById('meaning-container');
+            container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
+            const elements = document.querySelectorAll('.meaning');
+            elements.forEach((el, i) => {
+                setTimeout(() => {
+                    elements.forEach(e => e.classList.remove('active'));
+                    el.classList.add('active');
+                }, i * (6000 / data.meanings.length));
+            });
+            setTimeout(start, 6000);
+        }
+        window.onload = start;
+    </script>
+</body>
+</html>
