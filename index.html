@@ -3,23 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v5.7</title>
+    <title>Trigger Voca v5.8</title>
     <style>
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
-        body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         #app { width: 90%; max-width: 400px; text-align: center; }
-        .view { display: none; background: white; padding: 35px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .view { display: none; background: white; padding: 35px 25px; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .view.active { display: block; }
         input { width: 100%; padding: 18px; margin: 12px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
-        .benefit-tag { background: #fff3e0; color: #ef6c00; font-size: 0.8rem; font-weight: bold; padding: 6px 12px; border-radius: 6px; display: inline-block; margin-bottom: 15px; }
-        .agree-container { display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin: 20px 0; cursor: pointer; text-align: left; }
-        .agree-container input[type="checkbox"] { width: 20px; height: 20px; margin: 0; cursor: pointer; }
-        .agree-container label { font-size: 0.85rem; color: #666; cursor: pointer; line-height: 1.4; }
-        button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
-        button:active { transform: scale(0.98); opacity: 0.9; }
-        button:disabled { background: #bbb !important; cursor: not-allowed; }
+        .benefit-tag { background: #fff3e0; color: #ef6c00; font-size: 0.85rem; font-weight: bold; padding: 8px 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; }
+        /* 체크박스 영역 수정 [cite: 2026-03-05] */
+        .agree-label { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin: 25px 0; cursor: pointer; text-align: left; }
+        .agree-label input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; margin: 0; flex-shrink: 0; }
+        .agree-label span { font-size: 0.9rem; color: #555; cursor: pointer; user-select: none; }
+        button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
+        button:active { transform: scale(0.97); }
+        button:disabled { background: #ccc !important; cursor: not-allowed; }
+        /* 학습 카드 스타일 */
         .card { position: relative; padding: 50px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; }
-        .word { font-size: 3.5rem; font-weight: 800; margin: 0; color: #1a1a1a; }
+        .word { font-size: 3.5rem; font-weight: 800; margin: 0; }
         .meaning { font-size: 1.8rem; color: #888; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
         .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
         #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; }
@@ -28,35 +30,35 @@
 <body>
     <div id="app">
         <div id="view-login" class="view active">
-            <span class="benefit-tag">MEMBERSHIP EVENT</span>
-            <h3 style="margin-top:0;">학습자 인증</h3>
-            <p style="font-size:0.85rem; color:#888; margin-bottom:20px;">전화번호 전체 입력 시 학습 완료 후 포인트가 적립됩니다.</p>
+            <span class="benefit-tag">🎁 POINT EVENT</span>
+            <h3 style="margin-top:0;">학습자 정보 입력</h3>
+            <p style="font-size:0.9rem; color:#888; margin-bottom:20px;">전화번호를 남겨주시면 학습 완료 후<br><b>추가 혜택(포인트)</b>이 적립됩니다.</p>
             <input type="text" id="user-name" placeholder="학생 이름 (필수)">
-            <input type="tel" id="user-phone" placeholder="전화번호 (예: 01012345678)">
+            <input type="tel" id="user-phone" placeholder="전화번호 전체 (선택사항)">
             
-            <div class="agree-container" onclick="toggleCheckbox()">
+            <label class="agree-label">
                 <input type="checkbox" id="user-agree">
-                <label>[필수] 서비스 이용 및 데이터 기록 동의</label>
-            </div>
-            <button onclick="handleLogin()">학습 시작하기</button>
+                <span>[필수] 서비스 이용 및 데이터 기록 동의</span>
+            </label>
+            <button onclick="handleLoginSubmit()">학습 시작하기</button>
         </div>
 
         <div id="view-mode" class="view">
             <h2 id="welcome-msg" style="margin-bottom:30px;"></h2>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <button onclick="setMode('middle')">중등 코스</button>
-                <button onclick="setMode('high')" style="background:#2196F3">고등 코스</button>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+                <button onclick="selectCourse('middle')">중등 코스</button>
+                <button onclick="selectCourse('high')" style="background:#2196F3">고등 코스</button>
             </div>
         </div>
 
         <div id="view-study" class="view">
             <div class="card">
                 <div id="timer-bar"></div>
-                <p id="progress-text" style="color:#aaa; font-weight:bold;">준비 중</p>
+                <p id="progress-text" style="color:#aaa; font-weight:bold;">준비 완료</p>
                 <h1 class="word" id="display-word">Trigger</h1>
                 <div id="meaning-container"></div>
             </div>
-            <button id="action-btn" onclick="startVoca()">지금 바로 주입</button>
+            <button id="action-btn" onclick="startLearning()">지금 바로 주입</button>
             <p id="cooldown-info" style="margin-top:15px; color:#e53935; font-weight:bold; min-height:1.2em;"></p>
         </div>
     </div>
@@ -75,65 +77,61 @@
             ]
         };
 
-        let user = { name: "", phone: "" };
-        let currentMode = "";
+        let userInfo = { name: "", phone: "" };
+        let selectedMode = "";
 
-        function showView(id) {
+        function changeView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+            document.getElementById(viewId).classList.add('active');
         }
 
-        function toggleCheckbox() {
-            const cb = document.getElementById('user-agree');
-            cb.checked = !cb.checked;
+        function handleLoginSubmit() {
+            const nameInput = document.getElementById('user-name').value.trim();
+            const phoneInput = document.getElementById('user-phone').value.trim();
+            const agreeChecked = document.getElementById('user-agree').checked;
+
+            if (!nameInput) { alert("성함을 입력해주세요."); return; }
+            if (!agreeChecked) { alert("이용 동의에 체크해주세요."); return; }
+
+            userInfo.name = nameInput;
+            userInfo.phone = phoneInput || "unregistered";
+
+            document.getElementById('welcome-msg').innerText = `${userInfo.name} 학생, 화이팅!`;
+            changeView('view-mode');
         }
 
-        function handleLogin() {
-            const name = document.getElementById('user-name').value;
-            const phone = document.getElementById('user-phone').value;
-            const agree = document.getElementById('user-agree').checked;
-
-            if (!name) { alert("성함을 입력해주세요."); return; }
-            if (!agree) { alert("이용 동의가 필요합니다."); return; }
-
-            user.name = name;
-            user.phone = phone || "unregistered";
-
-            document.getElementById('welcome-msg').innerText = `${name} 학생, 환영합니다!`;
-            showView('view-mode');
+        function selectCourse(mode) {
+            selectedMode = mode;
+            changeView('view-study');
+            updateCooldownStatus();
         }
 
-        function setMode(mode) {
-            currentMode = mode;
-            showView('view-study');
-            checkCooldown();
-        }
-
-        async function startVoca() {
+        async function startLearning() {
             document.getElementById('action-btn').disabled = true;
-            const words = wordLib[currentMode];
+            const words = wordLib[selectedMode];
             
             for(let i=0; i < words.length; i++) {
-                await injectWord(words[i], i+1, words.length);
+                await runInjection(words[i], i+1, words.length);
             }
 
-            const key = `tv_${user.name}_${user.phone}`;
-            const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
+            const storageKey = `tv_v58_${userInfo.name}_${userInfo.phone}`;
+            const stats = JSON.parse(localStorage.getItem(storageKey) || '{"sessions":0, "lastTime":0}');
             stats.sessions += 1;
             stats.lastTime = Date.now();
-            localStorage.setItem(key, JSON.stringify(stats));
+            localStorage.setItem(storageKey, JSON.stringify(stats));
 
-            let msg = "세션 완료! 10분간 휴식하세요.";
-            if (user.phone !== "unregistered") msg += "\n🎁 포인트가 적립되었습니다!";
-            alert(msg);
-            checkCooldown();
+            let alertMsg = "오늘 학습 세션을 완료했습니다! 10분간 휴식하세요.";
+            if (userInfo.phone !== "unregistered") alertMsg += "\n🎁 전화번호 혜택 포인트가 적립되었습니다!";
+            alert(alertMsg);
+            updateCooldownStatus();
         }
 
-        function injectWord(data, cur, total) {
+        function runInjection(data, cur, total) {
             return new Promise(resolve => {
                 document.getElementById('display-word').innerText = data.word;
                 document.getElementById('progress-text').innerText = `${cur} / ${total}`;
                 document.body.style.backgroundColor = data.color;
+                
                 const container = document.getElementById('meaning-container');
                 container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
                 
@@ -148,21 +146,21 @@
                         el.classList.add('active');
                     }, i * (6000 / data.meanings.length));
                 });
-                setTimeout(resolve, 6000); // 6초 주입 [cite: 2026-03-04]
+                setTimeout(resolve, 6000); // 6초 주입 원칙 [cite: 2026-03-04]
             });
         }
 
-        function checkCooldown() {
-            const key = `tv_${user.name}_${user.phone}`;
-            const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
+        function updateCooldownStatus() {
+            const storageKey = `tv_v58_${userInfo.name}_${userInfo.phone}`;
+            const stats = JSON.parse(localStorage.getItem(storageKey) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
-            const cooldownMs = 10 * 60 * 1000; // 10분 [cite: 2026-03-04]
+            const cooldownPeriod = 10 * 60 * 1000;
 
-            if (diff < cooldownMs && stats.sessions > 0) {
+            if (diff < cooldownPeriod && stats.sessions > 0) {
                 document.getElementById('action-btn').disabled = true;
-                const remain = Math.ceil((cooldownMs - diff) / 1000);
-                document.getElementById('cooldown-info').innerText = `휴식 중: ${Math.floor(remain/60)}분 ${remain%60}초 남음`;
-                setTimeout(checkCooldown, 1000);
+                const remainSec = Math.ceil((cooldownPeriod - diff) / 1000);
+                document.getElementById('cooldown-info').innerText = `휴식 중: ${Math.floor(remainSec/60)}분 ${remainSec%60}초 남음`;
+                setTimeout(updateCooldownStatus, 1000);
             } else {
                 document.getElementById('action-btn').disabled = false;
                 document.getElementById('cooldown-info').innerText = "";
