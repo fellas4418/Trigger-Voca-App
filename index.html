@@ -3,21 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v1.5</title>
+    <title>Trigger Voca v1.6</title>
     <style>
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
         #app { width: 90%; max-width: 400px; text-align: center; }
         .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; }
-        .tab-btn { flex: 1; padding: 15px; border-radius: 12px; border: 2px solid #ddd; background: white; cursor: pointer; font-weight: bold; }
+        .tab-btn { flex: 1; padding: 15px; border-radius: 12px; border: 2px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 1.1rem; color: #666; }
         .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
         .card { background: white; padding: 50px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); position: relative; margin-bottom: 20px; }
-        .word { font-size: 3.5rem; font-weight: 800; margin: 0; }
+        .word { font-size: 3.5rem; font-weight: 800; margin: 0; color: #1a1a1a; }
         .meaning { font-size: 1.8rem; color: #666; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
         .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
         #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; }
         button#action-btn { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; width: 100%; cursor: pointer; }
         button:disabled { background: #bbb !important; cursor: not-allowed; }
+        #cooldown-info { margin-top: 15px; color: #e53935; font-weight: bold; font-size: 0.9rem; }
     </style>
 </head>
 <body>
@@ -28,25 +29,26 @@
         </div>
         <div class="card">
             <div id="timer-bar"></div>
-            <p id="progress-text" style="color:#aaa; font-weight:bold;">준비 완료</p>
+            <p id="progress-text" style="color:#aaa; font-weight:bold; margin-bottom:10px;">준비 완료</p>
             <h1 class="word" id="display-word">Trigger</h1>
             <div id="meaning-container"></div>
         </div>
         <button id="action-btn" onclick="runSession()">학습 시작</button>
-        <p id="cooldown-info" style="margin-top:15px; color:#e53935; font-weight:bold;"></p>
+        <p id="cooldown-info"></p>
+        <p onclick="localStorage.clear(); location.reload();" style="font-size:10px; color:#ccc; cursor:pointer; margin-top:30px;">초기화(테스트용)</p>
     </div>
 
     <script>
         const wordLib = {
             middle: [
                 {word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"},
-                {word:"happen", meanings:["일어나다", "발생하다"], color:"#E8F5E9"},
-                {word:"stay", meanings:["머무르다"], color:"#E8F5E9"}
+                {word:"disappear", meanings:["사라지다"], color:"#E8F5E9"},
+                {word:"happen", meanings:["일어나다", "발생하다"], color:"#E8F5E9"}
             ],
             high: [
-                {word:"analyze", meanings:["분석하다"], color:"#FFF3E0"},
-                {word:"assume", meanings:["가정하다"], color:"#FFF3E0"},
-                {word:"confirm", meanings:["확인하다"], color:"#FFF3E0"}
+                {word:"acknowledge", meanings:["인정하다", "감사하다"], color:"#FFF3E0"},
+                {word:"acquire", meanings:["습득하다", "얻다"], color:"#FFF3E0"},
+                {word:"analyze", meanings:["분석하다"], color:"#FFF3E0"}
             ]
         };
 
@@ -55,18 +57,19 @@
             currentMode = m;
             document.getElementById('btn-middle').classList.toggle('active', m === 'middle');
             document.getElementById('btn-high').classList.toggle('active', m === 'high');
-            alert(m === 'middle' ? "중등 모드 선택" : "고등 모드 선택"); // 반응 확인용 [cite: 2026-03-04]
+            document.getElementById('display-word').innerText = "Trigger";
+            document.getElementById('meaning-container').innerHTML = "";
         }
 
         async function runSession() {
-            console.log("세션 시작");
             document.getElementById('action-btn').disabled = true;
             const words = wordLib[currentMode];
             for(let i=0; i < words.length; i++) {
                 await showWord(words[i], i + 1, words.length);
             }
+            // 세션 종료 후 쿨타임 기록 [cite: 2026-03-04]
             localStorage.setItem('tv_last_time', Date.now());
-            alert("세션 종료! 10분 휴식."); [cite: 2026-03-04]
+            alert("세션 종료! 10분 휴식 후 다음 학습이 가능합니다.");
             checkCooldown();
         }
 
@@ -77,15 +80,17 @@
                 document.body.style.backgroundColor = data.color;
                 const container = document.getElementById('meaning-container');
                 container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
+                
                 const bar = document.getElementById('timer-bar');
                 bar.style.transition = 'none'; bar.style.width = '0%';
                 setTimeout(() => { bar.style.transition = 'width 6000ms linear'; bar.style.width = '100%'; }, 50);
+
                 const elements = document.querySelectorAll('.meaning');
                 elements.forEach((el, i) => {
                     setTimeout(() => {
                         elements.forEach(e => e.classList.remove('active'));
                         el.classList.add('active');
-                    }, i * (6000 / data.meanings.length));
+                    }, i * (6000 / data.meanings.length)); // 6초 주입 원칙
                 });
                 setTimeout(resolve, 6000);
             });
@@ -107,6 +112,7 @@
             document.getElementById('action-btn').disabled = false;
             document.getElementById('cooldown-info').innerText = "";
         }
+
         window.onload = checkCooldown;
     </script>
 </body>
