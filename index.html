@@ -3,36 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v5.6</title>
+    <title>Trigger Voca v5.7</title>
     <style>
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
         #app { width: 90%; max-width: 400px; text-align: center; }
-        .view { display: none; background: white; padding: 30px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
+        .view { display: none; background: white; padding: 35px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); }
         .view.active { display: block; }
-        input { width: 100%; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
-        .benefit-tag { background: #fff3e0; color: #ef6c00; font-size: 0.8rem; font-weight: bold; padding: 4px 8px; border-radius: 4px; display: inline-block; margin-bottom: 10px; }
-        .agree-box { font-size: 0.8rem; color: #666; margin: 15px 0; text-align: left; display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
-        button { background: var(--primary); color: white; border: none; padding: 18px; border-radius: 12px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; }
-        button:disabled { background: #bbb !important; }
-        .card { position: relative; padding: 50px 10px; border: 1px solid #eee; border-radius: 24px; margin: 20px 0; overflow: hidden; }
-        .word { font-size: 3.5rem; font-weight: 800; margin: 0; }
+        input { width: 100%; padding: 18px; margin: 12px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
+        .benefit-tag { background: #fff3e0; color: #ef6c00; font-size: 0.8rem; font-weight: bold; padding: 6px 12px; border-radius: 6px; display: inline-block; margin-bottom: 15px; }
+        .agree-container { display: flex; align-items: center; justify-content: flex-start; gap: 10px; margin: 20px 0; cursor: pointer; text-align: left; }
+        .agree-container input[type="checkbox"] { width: 20px; height: 20px; margin: 0; cursor: pointer; }
+        .agree-container label { font-size: 0.85rem; color: #666; cursor: pointer; line-height: 1.4; }
+        button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.1rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
+        button:active { transform: scale(0.98); opacity: 0.9; }
+        button:disabled { background: #bbb !important; cursor: not-allowed; }
+        .card { position: relative; padding: 50px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; }
+        .word { font-size: 3.5rem; font-weight: 800; margin: 0; color: #1a1a1a; }
         .meaning { font-size: 1.8rem; color: #888; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
         .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
-        #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; transition: none; }
+        #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; }
     </style>
 </head>
 <body>
     <div id="app">
         <div id="view-login" class="view active">
-            <span class="benefit-tag">POINT EVENT</span>
+            <span class="benefit-tag">MEMBERSHIP EVENT</span>
             <h3 style="margin-top:0;">학습자 인증</h3>
-            <p style="font-size:0.85rem; color:#888; margin-bottom:20px;">전화번호 입력 시 완료 후 포인트가 적립됩니다.</p>
-            <input type="text" id="user-name" placeholder="성함 (필수)">
-            <input type="tel" id="user-phone" placeholder="전화번호 전체 (선택)">
+            <p style="font-size:0.85rem; color:#888; margin-bottom:20px;">전화번호 전체 입력 시 학습 완료 후 포인트가 적립됩니다.</p>
+            <input type="text" id="user-name" placeholder="학생 이름 (필수)">
+            <input type="tel" id="user-phone" placeholder="전화번호 (예: 01012345678)">
             
-            <div class="agree-box" onclick="document.getElementById('user-agree').click()">
-                <input type="checkbox" id="user-agree" style="width:auto; margin:0;">
+            <div class="agree-container" onclick="toggleCheckbox()">
+                <input type="checkbox" id="user-agree">
                 <label>[필수] 서비스 이용 및 데이터 기록 동의</label>
             </div>
             <button onclick="handleLogin()">학습 시작하기</button>
@@ -54,12 +57,11 @@
                 <div id="meaning-container"></div>
             </div>
             <button id="action-btn" onclick="startVoca()">지금 바로 주입</button>
-            <p id="cooldown-info" style="margin-top:15px; color:#e53935; font-weight:bold;"></p>
+            <p id="cooldown-info" style="margin-top:15px; color:#e53935; font-weight:bold; min-height:1.2em;"></p>
         </div>
     </div>
 
     <script>
-        // 데이터 (이미 다 넣어두었습니다) [cite: 2026-03-05]
         const wordLib = {
             middle: [
                 {word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"},
@@ -73,12 +75,17 @@
             ]
         };
 
-        let user = { name: "", phone: "", hasBenefit: false };
+        let user = { name: "", phone: "" };
         let currentMode = "";
 
         function showView(id) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+        }
+
+        function toggleCheckbox() {
+            const cb = document.getElementById('user-agree');
+            cb.checked = !cb.checked;
         }
 
         function handleLogin() {
@@ -90,8 +97,7 @@
             if (!agree) { alert("이용 동의가 필요합니다."); return; }
 
             user.name = name;
-            user.phone = phone || "unknown";
-            user.hasBenefit = phone.length > 9; // 번호 입력 시 혜택 부여 [cite: 2026-03-05]
+            user.phone = phone || "unregistered";
 
             document.getElementById('welcome-msg').innerText = `${name} 학생, 환영합니다!`;
             showView('view-mode');
@@ -111,7 +117,6 @@
                 await injectWord(words[i], i+1, words.length);
             }
 
-            // 학습 데이터 저장 [cite: 2026-03-05]
             const key = `tv_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
             stats.sessions += 1;
@@ -119,8 +124,8 @@
             localStorage.setItem(key, JSON.stringify(stats));
 
             let msg = "세션 완료! 10분간 휴식하세요.";
-            if (user.hasBenefit) msg += "\n🎁 번호 입력 혜택으로 포인트가 추가 적립되었습니다!";
-            alert(msg); [cite: 2026-03-05]
+            if (user.phone !== "unregistered") msg += "\n🎁 포인트가 적립되었습니다!";
+            alert(msg);
             checkCooldown();
         }
 
@@ -143,7 +148,7 @@
                         el.classList.add('active');
                     }, i * (6000 / data.meanings.length));
                 });
-                setTimeout(resolve, 6000); // 6초 주입 [cite: 2026-03-05]
+                setTimeout(resolve, 6000); // 6초 주입 [cite: 2026-03-04]
             });
         }
 
@@ -151,7 +156,7 @@
             const key = `tv_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
-            const cooldownMs = 10 * 60 * 1000;
+            const cooldownMs = 10 * 60 * 1000; // 10분 [cite: 2026-03-04]
 
             if (diff < cooldownMs && stats.sessions > 0) {
                 document.getElementById('action-btn').disabled = true;
