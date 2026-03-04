@@ -3,71 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v1.3</title>
+    <title>Trigger Voca v1.4</title>
     <style>
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
         #app { width: 90%; max-width: 400px; text-align: center; }
-        .card { background: white; padding: 40px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); position: relative; }
+        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; width: 100%; }
+        .tab-btn { flex: 1; padding: 15px; border-radius: 12px; border: 2px solid #ddd; background: white; cursor: pointer; font-weight: bold; font-size: 1.1rem; color: #666; }
+        .tab-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
+        .card { background: white; padding: 50px 20px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.1); position: relative; margin-bottom: 20px; }
         .word { font-size: 3.5rem; font-weight: 800; margin: 0; color: #1a1a1a; }
-        .meaning { font-size: 1.8rem; color: #666; opacity: 0.1; transition: 0.4s; margin: 10px 0; }
+        .meaning { font-size: 1.8rem; color: #666; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
         .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
         #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; }
-        button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; width: 100%; margin-top: 20px; cursor: pointer; }
-        button:disabled { background: #bbb; cursor: not-allowed; }
-        .tab-menu { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #ddd; background: white; cursor: pointer; }
-        .tab-btn.active { background: var(--primary); color: white; border: none; }
+        button#action-btn { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; width: 100%; cursor: pointer; }
+        button:disabled { background: #bbb !important; cursor: not-allowed; }
+        #cooldown-info { margin-top: 15px; color: #e53935; font-weight: bold; font-size: 0.9rem; }
     </style>
 </head>
 <body>
     <div id="app">
         <div class="tab-menu">
-            <button class="tab-btn active" onclick="setMode('middle')">중등</button>
-            <button class="tab-btn" onclick="setMode('high')">고등</button>
+            <button id="btn-middle" class="tab-btn active" onclick="setMode('middle')">중등</button>
+            <button id="btn-high" class="tab-btn" onclick="setMode('high')">고등</button>
         </div>
         <div class="card">
             <div id="timer-bar"></div>
-            <p id="progress-text" style="color:#aaa; font-weight:bold;">준비 완료</p>
+            <p id="progress-text" style="color:#aaa; font-weight:bold; margin-bottom:10px;">준비 완료</p>
             <h1 class="word" id="display-word">Trigger</h1>
             <div id="meaning-container"></div>
         </div>
         <button id="action-btn" onclick="runSession()">학습 시작</button>
-        <p id="info" style="margin-top:15px; color:#888;"></p>
+        <p id="cooldown-info"></p>
     </div>
 
     <script>
-        // [cite: 2026-03-04] 중등/고등 7일치 데이터 요약본 (실제 운영 시에는 전체 리스트로 확장)
+        // [cite: 2026-03-04] Day 1 전체 데이터 (중등 30개 / 고등 30개)
         const wordLib = {
             middle: [
-                { word: "appear", meanings: ["나타나다", "보이다"], color: "#E8F5E9" },
-                { word: "happen", meanings: ["일어나다", "발생하다"], color: "#E3F2FD" },
-                // ... 중등 210단어 데이터 영역
+                {word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"},
+                {word:"disappear", meanings:["사라지다"], color:"#E8F5E9"},
+                {word:"happen", meanings:["일어나다", "발생하다"], color:"#E8F5E9"},
+                {word:"occur", meanings:["발생하다"], color:"#E8F5E9"},
+                {word:"stay", meanings:["머무르다", "유지하다"], color:"#E8F5E9"},
+                {word:"arrive", meanings:["도착하다"], color:"#E8F5E9"},
+                {word:"exist", meanings:["존재하다"], color:"#E8F5E9"},
+                {word:"rise", meanings:["오르다"], color:"#E8F5E9"},
+                {word:"fall", meanings:["떨어지다"], color:"#E8F5E9"},
+                {word:"wait", meanings:["기다리다"], color:"#E8F5E9"},
+                {word:"smile", meanings:["미소 짓다"], color:"#E8F5E9"},
+                {word:"laugh", meanings:["웃다"], color:"#E8F5E9"},
+                {word:"sleep", meanings:["자다"], color:"#E8F5E9"},
+                {word:"live", meanings:["살다"], color:"#E8F5E9"},
+                {word:"die", meanings:["죽다"], color:"#E8F5E9"},
+                {word:"walk", meanings:["걷다"], color:"#E8F5E9"},
+                {word:"run", meanings:["달리다"], color:"#E8F5E9"},
+                {word:"stand", meanings:["서다"], color:"#E8F5E9"},
+                {word:"sit", meanings:["앉다"], color:"#E8F5E9"},
+                {word:"grow", meanings:["자라다"], color:"#E8F5E9"},
+                {word:"seem", meanings:["~인 것 같다"], color:"#E8F5E9"},
+                {word:"look", meanings:["~하게 보이다"], color:"#E8F5E9"},
+                {word:"feel", meanings:["느끼다"], color:"#E8F5E9"},
+                {word:"sound", meanings:["~하게 들리다"], color:"#E8F5E9"},
+                {word:"smell", meanings:["~한 냄새가 나다"], color:"#E8F5E9"},
+                {word:"become", meanings:["~이 되다"], color:"#E8F5E9"},
+                {word:"remain", meanings:["남다", "유지하다"], color:"#E8F5E9"},
+                {word:"belong", meanings:["속하다"], color:"#E8F5E9"},
+                {word:"consist", meanings:["구성되다"], color:"#E8F5E9"},
+                {word:"depend", meanings:["의존하다"], color:"#E8F5E9"}
             ],
             high: [
-                { word: "analyze", meanings: ["분석하다"], color: "#FFF3E0" },
-                { word: "assume", meanings: ["가정하다", "추정하다"], color: "#F3E5F5" },
-                // ... 고등 210단어 데이터 영역
+                {word:"acknowledge", meanings:["인정하다", "감사하다"], color:"#FFF3E0"},
+                {word:"acquire", meanings:["습득하다", "얻다"], color:"#FFF3E0"},
+                {word:"analyze", meanings:["분석하다"], color:"#FFF3E0"},
+                {word:"anticipate", meanings:["예상하다", "기대하다"], color:"#FFF3E0"},
+                {word:"appreciate", meanings:["인식하다", "감사하다"], color:"#FFF3E0"},
+                {word:"articulate", meanings:["명확히 표현하다"], color:"#FFF3E0"},
+                {word:"assert", meanings:["주장하다"], color:"#FFF3E0"},
+                {word:"assume", meanings:["가정하다", "추정하다"], color:"#FFF3E0"},
+                {word:"attribute", meanings:["~의 탓으로 돌리다"], color:"#FFF3E0"},
+                {word:"clarify", meanings:["명확하게 하다"], color:"#FFF3E0"},
+                {word:"conclude", meanings:["결론을 내리다"], color:"#FFF3E0"},
+                {word:"confirm", meanings:["확인하다"], color:"#FFF3E0"},
+                {word:"constitute", meanings:["구성하다"], color:"#FFF3E0"},
+                {word:"conceive", meanings:["상상하다", "품다"], color:"#FFF3E0"},
+                {word:"convince", meanings:["납득시키다"], color:"#FFF3E0"},
+                {word:"derive", meanings:["이끌어내다"], color:"#FFF3E0"},
+                {word:"detect", meanings:["발견하다", "감지하다"], color:"#FFF3E0"},
+                {word:"differentiate", meanings:["구별하다"], color:"#FFF3E0"},
+                {word:"diminish", meanings:["줄어들다"], color:"#FFF3E0"},
+                {word:"eliminate", meanings:["제거하다"], color:"#FFF3E0"},
+                {word:"emphasize", meanings:["강조하다"], color:"#FFF3E0"},
+                {word:"ensure", meanings:["보장하다"], color:"#FFF3E0"},
+                {word:"establish", meanings:["설립하다", "확립하다"], color:"#FFF3E0"},
+                {word:"estimate", meanings:["추정하다", "평가하다"], color:"#FFF3E0"},
+                {word:"evaluate", meanings:["평가하다"], color:"#FFF3E0"},
+                {word:"examine", meanings:["조사하다"], color:"#FFF3E0"},
+                {word:"exhibit", meanings:["전시하다", "보이다"], color:"#FFF3E0"},
+                {word:"expand", meanings:["확장하다"], color:"#FFF3E0"},
+                {word:"expect", meanings:["기대하다"], color:"#FFF3E0"},
+                {word:"explore", meanings:["탐험하다", "조사하다"], color:"#FFF3E0"}
             ]
         };
 
         let currentMode = 'middle';
         function setMode(m) {
             currentMode = m;
-            document.querySelectorAll('.tab-btn').forEach(b => b.classList.toggle('active', b.innerText === (m === 'middle' ? '중등' : '고등')));
+            document.getElementById('btn-middle').classList.toggle('active', m === 'middle');
+            document.getElementById('btn-high').classList.toggle('active', m === 'high');
+            document.getElementById('display-word').innerText = "Trigger";
+            document.getElementById('meaning-container').innerHTML = "";
+            document.getElementById('progress-text').innerText = "준비 완료";
         }
 
         async function runSession() {
             document.getElementById('action-btn').disabled = true;
-            const words = wordLib[currentMode].slice(0, 30); // 하루 30개씩 [cite: 2026-03-04]
-            
+            const words = wordLib[currentMode];
             for(let i=0; i < words.length; i++) {
                 await showWord(words[i], i + 1, words.length);
             }
-            
             localStorage.setItem('tv_last_time', Date.now());
-            alert("세션 완료! 10분간 휴식하세요."); [cite: 2026-03-04]
-            location.reload();
+            alert("세션 종료! 10분 휴식 후 다음 학습이 가능합니다."); [cite: 2026-03-04]
+            checkCooldown();
         }
 
         function showWord(data, cur, total) {
@@ -77,11 +134,9 @@
                 document.body.style.backgroundColor = data.color;
                 const container = document.getElementById('meaning-container');
                 container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
-                
                 const bar = document.getElementById('timer-bar');
                 bar.style.transition = 'none'; bar.style.width = '0%';
                 setTimeout(() => { bar.style.transition = 'width 6000ms linear'; bar.style.width = '100%'; }, 50);
-
                 const elements = document.querySelectorAll('.meaning');
                 elements.forEach((el, i) => {
                     setTimeout(() => {
@@ -93,15 +148,24 @@
             });
         }
 
-        window.onload = () => {
+        function checkCooldown() {
             const last = localStorage.getItem('tv_last_time');
-            if (last && (Date.now() - last < 600000)) {
-                document.getElementById('action-btn').disabled = true;
-                const remain = Math.ceil((600000 - (Date.now() - last)) / 1000);
-                document.getElementById('info').innerText = `휴식 중: ${Math.floor(remain/60)}분 ${remain%60}초`;
-                setTimeout(() => location.reload(), 1000);
+            if (last) {
+                const diff = Date.now() - parseInt(last);
+                const cooldownMs = 10 * 60 * 1000;
+                if (diff < cooldownMs) {
+                    document.getElementById('action-btn').disabled = true;
+                    const remain = Math.ceil((cooldownMs - diff) / 1000);
+                    document.getElementById('cooldown-info').innerText = `휴식 중: ${Math.floor(remain/60)}분 ${remain%60}초 남음`;
+                    setTimeout(checkCooldown, 1000); // 새로고침 없이 텍스트만 업데이트 [cite: 2026-03-04]
+                    return;
+                }
             }
-        };
+            document.getElementById('action-btn').disabled = false;
+            document.getElementById('cooldown-info').innerText = "";
+        }
+
+        window.onload = checkCooldown;
     </script>
 </body>
 </html>
