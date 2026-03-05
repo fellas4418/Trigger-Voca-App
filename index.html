@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v7.6 - Final Master</title>
+    <title>Trigger Voca v7.7 - Master Edition</title>
     
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js" 
             integrity="sha384-l+xbElFSnPZ2rOaPrU//2FF5B4LB8FiX5q4fXYTlfcG4PGpMkE1vcL7kNXI6Cci0" 
@@ -11,7 +11,7 @@
 
     <style>
         /* ---------------------------------------------------------
-           [CSS] Doodle UI & 오리지널 스타일 (전체 복원) [cite: 2026-03-05]
+           [CSS Section] Doodle UI 디자인 시스템 (전체 보존) [cite: 2026-03-05]
         --------------------------------------------------------- */
         :root {
             --primary: #ff6b4a; /* 주황 포인트 */
@@ -32,6 +32,7 @@
             min-height: 100vh;
             margin: 0;
             transition: background-color 0.5s ease;
+            overflow-x: hidden;
         }
 
         #app {
@@ -41,7 +42,7 @@
         }
 
         .app-header {
-            font-size: 1.2rem;
+            font-size: 1.25rem;
             font-weight: 900;
             color: var(--dark);
             margin-bottom: 25px;
@@ -63,6 +64,7 @@
             display: block;
         }
 
+        /* 입력 폼 스타일 [cite: 2026-03-05] */
         input {
             width: 100%;
             padding: 22px;
@@ -104,6 +106,7 @@
             border: 3.5px solid var(--dark);
         }
 
+        /* 버튼 컴포넌트 [cite: 2026-03-05] */
         button {
             background-color: var(--primary);
             color: var(--white);
@@ -114,7 +117,7 @@
             font-weight: 900;
             cursor: pointer;
             width: 100%;
-            transition: 0.2s;
+            transition: all 0.2s;
             box-shadow: 6px 6px 0px 0px var(--dark);
         }
 
@@ -130,12 +133,12 @@
             transform: none;
         }
 
-        /* 반복 횟수 선택 옵션 [cite: 2026-03-05] */
+        /* 반복 횟수 선택창 [cite: 2026-03-05] */
         .option-box {
-            background: #fff;
+            background: #ffffff;
             border: 3.5px solid var(--dark);
             border-radius: 20px;
-            padding: 20px;
+            padding: 22px;
             margin-bottom: 30px;
             box-shadow: 6px 6px 0px 0px #eeeeee;
             text-align: left;
@@ -146,6 +149,7 @@
             display: block;
             margin-bottom: 12px;
             color: var(--dark);
+            font-size: 1rem;
         }
 
         .repeat-btn-group {
@@ -157,10 +161,11 @@
             padding: 12px;
             font-size: 1.1rem;
             background: #f0f0f0;
-            color: #777;
+            color: #777777;
             border: 3px solid var(--dark);
-            box-shadow: 4px 4px 0px 0px #ccc;
+            box-shadow: 4px 4px 0px 0px #cccccc;
             cursor: pointer;
+            flex: 1;
         }
 
         .rep-choice.active {
@@ -169,128 +174,150 @@
             box-shadow: 4px 4px 0px 0px var(--dark);
         }
 
-        /* 학습 카드 (정렬 수정) [cite: 2026-03-05] */
+        /* 뇌과학적 각인 카드 (레이아웃 수정) [cite: 2026-03-04, 2026-03-05] */
         .card {
             position: relative;
-            padding: 80px 20px;
+            padding: 85px 20px;
             border: 4px solid var(--dark);
             border-radius: 50px 15px 50px 15px;
             margin: 30px 0;
             background-color: var(--white);
-            min-height: 280px;
+            min-height: 290px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            overflow: hidden; /* 타이머 바 삐져나감 방지 */
+            overflow: hidden; /* 바 정렬의 핵심 */
             box-shadow: 15px 15px 0px 0px #eeeeee;
         }
 
+        /* 타이머 바 정밀 좌표 [cite: 2026-03-05] */
         #timer-bar {
             position: absolute;
             top: 0;
             left: 0;
-            height: 12px;
+            height: 14px;
             background-color: var(--green);
             width: 0%;
             transition: width 0.3s linear;
             border-bottom: 4px solid var(--dark);
-            z-index: 10;
+            z-index: 100;
         }
 
         .progress-text {
             position: absolute;
-            top: 25px;
+            top: 28px;
             right: 35px;
             font-weight: 900;
             color: #bbbbbb;
+            font-size: 0.95rem;
         }
 
         .word {
-            font-size: 4rem;
+            font-size: 4.2rem;
             font-weight: 900;
             color: var(--dark);
             margin: 0;
+            text-shadow: 3px 3px 0px #f0f0f0;
         }
 
         .word.small {
-            font-size: 2rem !important;
+            font-size: 2.1rem !important;
         }
 
         .countdown-overlay {
-            font-size: 5.5rem;
+            font-size: 6rem;
             color: var(--primary);
             font-weight: 900;
-            margin-top: 20px;
+            margin-top: 25px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
         .meaning {
-            font-size: 2.2rem;
+            font-size: 2.3rem;
             color: #999999;
             opacity: 0.05;
-            transition: 0.4s;
-            margin: 20px 0;
+            transition: all 0.4s ease;
+            margin: 22px 0;
         }
 
         .meaning.active {
             opacity: 1;
             color: var(--dark);
             font-weight: 900;
-            transform: scale(1.1);
+            transform: scale(1.15);
         }
 
-        /* 음성 컨트롤 [cite: 2026-03-05] */
+        /* 음성 설정 인터페이스 [cite: 2026-03-05] */
         .audio-ctrl {
             display: flex;
             justify-content: flex-end;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 12px;
+            margin-bottom: 15px;
         }
 
         .audio-msg {
             font-size: 0.85rem;
             color: #999999;
             font-weight: 900;
+            background: #fff;
+            padding: 4px 10px;
+            border-radius: 10px;
+            border: 2px solid #eee;
         }
 
         #mute-btn {
             background: none;
             border: none;
             box-shadow: none;
-            font-size: 1.8rem;
+            font-size: 2rem;
             width: auto;
             padding: 0;
             cursor: pointer;
+            transition: 0.2s;
         }
 
-        /* 테스트 옵션 버튼 (복구) [cite: 2026-03-05] */
+        #mute-btn:hover { transform: scale(1.2); }
+
+        /* 마스터 테스트 보기 디자인 */
         .test-option {
             background-color: var(--white);
             border: 3.5px solid var(--dark);
             border-radius: 20px 8px;
-            padding: 22px;
+            padding: 24px;
             margin-top: 15px;
-            font-size: 1.3rem;
+            font-size: 1.35rem;
             font-weight: 900;
             box-shadow: 5px 5px 0px 0px #eeeeee;
-            transition: 0.2s;
+            transition: all 0.2s ease;
             width: 100%;
             cursor: pointer;
+            text-align: center;
         }
+
+        .test-option:hover { background-color: #fafafa; }
 
         .test-option.correct {
             background-color: var(--green) !important;
             color: white !important;
+            border-color: var(--dark);
             box-shadow: 5px 5px 0px 0px var(--dark);
         }
 
         .test-option.wrong {
             background-color: var(--error) !important;
             color: white !important;
+            border-color: var(--dark);
             box-shadow: 5px 5px 0px 0px var(--dark);
         }
 
-        /* 성적표 팝업 [cite: 2026-03-05] */
+        /* 성적표 팝업 디자인 [cite: 2026-03-05] */
         #report-overlay {
             display: none;
             position: fixed;
@@ -307,36 +334,39 @@
         .report-card {
             background: var(--white);
             width: 90%;
-            max-width: 380px;
-            padding: 45px;
-            border-radius: 50px 15px;
+            max-width: 390px;
+            padding: 50px 40px;
+            border-radius: 55px 15px;
             border: 8px solid var(--primary);
             text-align: center;
-            box-shadow: 20px 20px 0px 0px rgba(0,0,0,0.3);
+            box-shadow: 25px 25px 0px 0px rgba(0,0,0,0.3);
         }
+
+        .report-card h2 { font-size: 2.2rem; margin-bottom: 30px; }
 
         .stat-line {
             display: flex;
             justify-content: space-between;
-            padding: 18px 0;
+            padding: 20px 0;
             border-bottom: 4px dashed #f0f0f0;
-            font-size: 1.25rem;
+            font-size: 1.3rem;
             font-weight: 900;
         }
 
         .mention-text {
-            margin-top: 35px;
-            font-size: 1.4rem;
+            margin-top: 40px;
+            font-size: 1.5rem;
             color: var(--primary);
             font-weight: 900;
             line-height: 1.5;
+            padding: 0 10px;
         }
 
         .kakao-send {
             background-color: #FEE500;
             color: #3C1E1E;
-            margin-top: 35px;
-            box-shadow: 6px 6px 0px 0px #3C1E1E;
+            margin-top: 40px;
+            box-shadow: 7px 7px 0px 0px #3C1E1E;
         }
     </style>
 </head>
@@ -347,39 +377,47 @@
 
         <div id="view-login" class="view">
             <span class="benefit-tag">🎁 DOODLE EVENT</span>
-            <h2 style="margin-bottom:10px;">학습자 정보</h2>
+            <h2 style="margin-bottom:15px;">학습자 정보</h2>
+            <p style="color:#888; font-size: 0.95rem; margin-bottom: 25px;">포인트 적립을 위해 정보를 입력하세요.</p>
+            
             <input type="text" id="user-name" placeholder="성함 (필수)">
             <input type="tel" id="user-phone" placeholder="전화번호 전체 (선택)">
+            
             <div class="agree-container" onclick="document.getElementById('user-agree').click()">
                 <input type="checkbox" id="user-agree" onclick="event.stopPropagation()">
-                <label for="user-agree">학습 데이터 기록 및 보관에 동의합니다.</label>
+                <label for="user-agree">학습 데이터 기록 및 관리에 동의합니다.</label>
             </div>
+            
             <button onclick="handleLogin()">학습 시작하기!</button>
         </div>
 
         <div id="view-mode" class="view">
-            <h2 id="welcome-msg" style="margin-bottom:30px;"></h2>
+            <h2 id="welcome-msg" style="margin-bottom:30px; font-size: 1.8rem;"></h2>
             
             <div class="option-box">
-                <span class="option-label">학습 강도 설정</span>
+                <span class="option-label">학습 강도 설정 (회차 반복)</span>
                 <div class="repeat-btn-group">
-                    <button id="btn-rep2" class="rep-choice active" onclick="updateRepeat(2)">2회 반복</button>
-                    <button id="btn-rep3" class="rep-choice" onclick="updateRepeat(3)">3회 반복</button>
+                    <button id="btn-rep2" class="rep-choice active" onclick="updateRepeat(2)">2회 반복 (기본)</button>
+                    <button id="btn-rep3" class="rep-choice" onclick="updateRepeat(3)">3회 반복 (강력)</button>
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
                 <button onclick="pickCourse('middle')" style="background-color:#bdbdbd;">중등 코스</button>
                 <button onclick="pickCourse('high')" style="background-color:#2196F3;">고등 코스</button>
             </div>
 
-            <div id="cooldown-area" style="display:none; margin-top:30px; padding:25px; border:4px solid #ef6c00; border-radius:20px; font-weight:900; color:#ef6c00; background-color:#fff3e0;"></div>
-            <button id="admin-reset" onclick="forceReset()" style="display:none; background:none; border:none; color:#999; text-decoration:underline; margin-top:25px; cursor:pointer;">(테스트용) 리셋</button>
+            <div id="cooldown-area" style="display:none; margin-top:35px; padding:25px; border:4px solid #ef6c00; border-radius:22px; font-weight:900; color:#ef6c00; background-color:#fff3e0;"></div>
+            
+            <button id="admin-reset" onclick="forceReset()" 
+                    style="display:none; background:none; border:none; color:#999; text-decoration:underline; margin-top:30px; cursor:pointer; font-weight: 900;">
+                (테스트용) 데이터 초기화
+            </button>
         </div>
 
         <div id="view-study" class="view">
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <button onclick="location.reload()" style="background:none; border:none; color:#666; font-weight:900; width:auto; padding:0; box-shadow:none;">← 메인</button>
+                <button onclick="location.reload()" style="background:none; border:none; color:#666; font-weight:900; width:auto; padding:0; box-shadow:none;">← 메인으로</button>
                 <div class="audio-ctrl">
                     <span class="audio-msg">소리를 들어보세요.</span>
                     <button id="mute-btn" onclick="toggleAudio()">🔊</button>
@@ -394,14 +432,14 @@
                 <div id="countdown-num" class="countdown-overlay" style="display:none;"></div>
                 
                 <div id="meanings-box"></div>
-                <div id="test-box" style="display:none;"></div>
+                <div id="test-box" style="display:none; width: 100%;"></div>
             </div>
 
             <div id="start-btn-area">
-                <button onclick="skipCountdown()">바로 시작!</button>
+                <button id="skip-count-btn" onclick="skipCountdown()">바로 시작!</button>
             </div>
             
-            <div id="pause-area" style="display:none; margin-top:20px;">
+            <div id="pause-area" style="display:none; margin-top:25px;">
                 <button id="pause-btn" onclick="handlePause()" style="background-color:#ff9800;">일시 중지</button>
             </div>
         </div>
@@ -409,25 +447,32 @@
 
     <div id="report-overlay">
         <div class="report-card">
-            <h2 id="rep-name" style="margin-bottom:30px; font-size: 2.2rem;"></h2>
+            <h2 id="rep-name"></h2>
+            
             <div class="stat-line"><span>학습 코스</span><b id="rep-course"></b></div>
             <div class="stat-line"><span>테스트 점수</span><b id="rep-score" style="color:var(--primary);"></b></div>
             <div class="stat-line"><span>오늘의 세션</span><b id="rep-session"></b></div>
             
             <p id="rep-mention" class="mention-text"></p>
             
-            <button class="kakao-send" onclick="kakaoShare()">💬 학부모님께 리포트 전송</button>
-            <p onclick="location.reload()" style="margin-top:35px; color:#aaa; cursor:pointer; font-weight:900; text-decoration:underline;">닫기</p>
+            <button class="kakao-send" onclick="kakaoShare()">💬 학부모님께 결과 전송</button>
+            <p onclick="location.reload()" style="margin-top:40px; color:#aaa; cursor:pointer; font-weight:900; text-decoration:underline;">닫기</p>
         </div>
     </div>
 
     <script>
         /* ---------------------------------------------------------
-           [Logic] 비즈니스 완결판 7.6 (Full Script) [cite: 2026-03-05]
+           [JavaScript] 비즈니스 로직 완결판 (Full Script) [cite: 2026-03-05]
         --------------------------------------------------------- */
         
-        try { Kakao.init('fbb1520306ffaad0a882e993109a801c'); } catch(e) {}
+        // 카카오 공식 SDK 초기화 (대표님 키 적용) [cite: 2026-03-05]
+        try { 
+            Kakao.init('fbb1520306ffaad0a882e993109a801c'); 
+        } catch(e) { 
+            console.error("Kakao SDK Load Error"); 
+        }
 
+        // 마스터 단어 라이브러리 (정오답 데이터 통합) [cite: 2026-03-05]
         const library = {
             middle: [
                 {word:"appear", mean:["나타나다", "보이다"], color:"#E8F5E9", wrong:["사라지다", "공부하다", "달리다"]},
@@ -439,8 +484,15 @@
             ]
         };
 
-        let user = { name: "" }, mode = "", repeats = 2, isPaused = false, activeStudy = false, muted = false;
-        let timerId = null, score = 0, countdownAborted = false;
+        let user = { name: "" };
+        let mode = "";
+        let repeats = 2; // 기본 2회 반복
+        let isPaused = false;
+        let activeStudy = false;
+        let muted = false;
+        let timerId = null;
+        let score = 0;
+        let countdownAborted = false;
 
         window.onload = function() {
             const data = localStorage.getItem('tv_user_info');
@@ -448,13 +500,15 @@
                 user = JSON.parse(data);
                 document.getElementById('welcome-msg').innerText = `${user.name}님,`;
                 changeView('view-mode');
-                runCooldownCheck(); [cite: 2026-03-05]
-            } else { changeView('view-login'); }
+                runCooldownCheck(); 
+            } else {
+                changeView('view-login');
+            }
         };
 
         function handleLogin() {
             const n = document.getElementById('user-name').value.trim();
-            if(!n || !document.getElementById('user-agree').checked) return alert("성함과 동의가 필수입니다!");
+            if(!n || !document.getElementById('user-agree').checked) return alert("성함 입력과 이용 동의가 필수입니다!");
             user = { name: n, phone: document.getElementById('user-phone').value.trim() || "0" };
             localStorage.setItem('tv_user_info', JSON.stringify(user));
             location.reload();
@@ -466,23 +520,39 @@
             document.getElementById('btn-rep3').classList.toggle('active', count === 3);
         }
 
-        function toggleAudio() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇" : "🔊"; }
-        function playWord(txt) { if (muted) return; const s = new SpeechSynthesisUtterance(txt); s.lang = 'en-US'; s.rate = 0.8; window.speechSynthesis.speak(s); }
+        function toggleAudio() {
+            muted = !muted;
+            document.getElementById('mute-btn').innerText = muted ? "🔇" : "🔊";
+        }
+
+        function playWord(txt) {
+            if (muted) return;
+            const s = new SpeechSynthesisUtterance(txt);
+            s.lang = 'en-US'; 
+            s.rate = 0.8;
+            window.speechSynthesis.speak(s);
+        }
 
         function changeView(id) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(id).classList.add('active');
+            // 학습 화면 진입 시 자동 카운트다운 트리거 [cite: 2026-03-05]
             if(id === 'view-study') autoCountdown();
         }
 
-        function pickCourse(m) { mode = m; changeView('view-study'); }
+        function pickCourse(m) {
+            mode = m;
+            changeView('view-study');
+        }
 
         /* [cite: 2026-03-05] 자동 카운트다운 로직 */
         async function autoCountdown() {
             countdownAborted = false;
             const display = document.getElementById('display-word');
             const countOverlay = document.getElementById('countdown-num');
-            display.innerText = "준비해 주세요"; display.classList.add('small');
+            
+            display.innerText = "준비해 주세요"; 
+            display.classList.add('small');
             countOverlay.style.display = 'block';
 
             for(let i=3; i > 0; i--) {
@@ -490,14 +560,20 @@
                 countOverlay.innerText = i;
                 await new Promise(r => setTimeout(r, 1000));
             }
-            if(!activeStudy) launchStudy(); [cite: 2026-03-05]
+            
+            if(!activeStudy) launchStudy(); 
         }
 
-        function skipCountdown() { countdownAborted = true; launchStudy(); }
+        function skipCountdown() {
+            countdownAborted = true;
+            launchStudy();
+        }
 
+        /* [cite: 2026-03-04, 2026-03-05] 핵심 학습 엔진 */
         async function launchStudy() {
             if(activeStudy) return;
             activeStudy = true;
+            
             document.getElementById('countdown-num').style.display = 'none';
             document.getElementById('display-word').classList.remove('small');
             document.getElementById('start-btn-area').style.display = 'none';
@@ -505,13 +581,17 @@
             
             const words = library[mode];
             for(let i=0; i < words.length; i++) {
+                // [cite: 2026-03-05] 설정한 횟수만큼 반복
                 for(let r=0; r < repeats; r++) {
                     if(!activeStudy) return;
-                    document.getElementById('word-progress').innerText = `${i+1}/${words.length} (${r+1}/${repeats}회차)`;
-                    playWord(words[i].word); // [cite: 2026-03-05] 회차마다 발음
+                    document.getElementById('word-progress').innerText = `${i+1} / ${words.length} (${r+1}/${repeats}회차)`;
+                    
+                    // 회차마다 발음 재생 [cite: 2026-03-05]
+                    playWord(words[i].word);
                     await wordCycle(words[i], 6000);
                 }
             }
+            
             if(activeStudy) runMasterTest();
         }
 
@@ -520,30 +600,49 @@
                 const bar = document.getElementById('timer-bar');
                 document.getElementById('display-word').innerText = data.word;
                 document.body.style.backgroundColor = data.color;
-                document.getElementById('meanings-box').innerHTML = data.mean.map(m => `<div class="meaning">${m}</div>`).join('');
-                let ms = 0; if(timerId) clearInterval(timerId);
+                
+                const box = document.getElementById('meanings-box');
+                box.innerHTML = data.mean.map(m => `<div class="meaning">${m}</div>`).join('');
+                
+                let ms = 0;
+                if(timerId) clearInterval(timerId);
+                
                 timerId = setInterval(() => {
                     if(!isPaused) {
-                        ms += 100; bar.style.width = (ms / time * 100) + '%';
+                        ms += 100;
+                        bar.style.width = (ms / time * 100) + '%';
+                        
                         const list = document.querySelectorAll('.meaning');
                         const idx = Math.floor((ms / time) * data.mean.length);
-                        list.forEach((el, i) => el.classList.toggle('active', i === idx));
-                        if(ms >= time) { clearInterval(timerId); resolve(); }
+                        list.forEach((el, i) => {
+                            if(i === idx) el.classList.add('active');
+                            else el.classList.remove('active');
+                        });
+
+                        if(ms >= time) { 
+                            clearInterval(timerId); 
+                            resolve(); 
+                        }
                     }
                 }, 100);
             });
         }
 
+        /* [cite: 2026-03-04, 2026-03-05] 마스터 테스트 엔진 (5초 제한) */
         async function runMasterTest() {
             document.getElementById('pause-area').style.display = 'none';
             document.getElementById('meanings-box').innerHTML = "";
             const testBox = document.getElementById('test-box');
             testBox.style.display = 'block';
-            score = 0; const words = library[mode];
+            
+            score = 0;
+            const words = library[mode];
+            
             for(let i=0; i < words.length; i++) {
-                document.getElementById('word-progress').innerText = `TEST: ${i+1}/${words.length}`;
+                document.getElementById('word-progress').innerText = `TEST: ${i+1} / ${words.length}`;
                 await testQuestion(words[i]);
             }
+            
             showFinalReport();
         }
 
@@ -552,11 +651,15 @@
                 document.getElementById('display-word').innerText = data.word;
                 document.body.style.backgroundColor = "#ffffff";
                 const box = document.getElementById('test-box');
-                const options = [...data.wrong, data.mean[0]].sort(() => Math.random() - 0.5);
+                
+                // 보기 섞기 및 렌더링 [cite: 2026-03-05]
+                const pool = [...data.wrong, data.mean[0]].sort(() => Math.random() - 0.5);
                 box.innerHTML = "";
-                options.forEach(txt => {
+                
+                pool.forEach(txt => {
                     const b = document.createElement('button');
-                    b.className = 'test-option'; b.innerText = txt;
+                    b.className = 'test-option';
+                    b.innerText = txt;
                     b.onclick = () => {
                         clearInterval(timerId);
                         document.querySelectorAll('.test-option').forEach(btn => {
@@ -569,68 +672,104 @@
                     };
                     box.appendChild(b);
                 });
-                let ms = 0; const limit = 5000; if(timerId) clearInterval(timerId);
+
+                let ms = 0;
+                const limit = 5000; // 5초 인출 제한 [cite: 2026-03-05]
+                if(timerId) clearInterval(timerId);
+                
                 timerId = setInterval(() => {
-                    ms += 100; document.getElementById('timer-bar').style.width = (100 - (ms/limit*100)) + '%';
-                    if(ms >= limit) { clearInterval(timerId); resolve(); }
+                    ms += 100;
+                    document.getElementById('timer-bar').style.width = (100 - (ms/limit*100)) + '%';
+                    if(ms >= limit) { 
+                        clearInterval(timerId); 
+                        // 시간 초과 시 정답만 표시하고 넘어감
+                        document.querySelectorAll('.test-option').forEach(btn => {
+                            if(btn.innerText === data.mean[0]) btn.classList.add('correct');
+                            btn.disabled = true;
+                        });
+                        setTimeout(resolve, 1200);
+                    }
                 }, 100);
             });
         }
 
         function handlePause() {
-            isPaused = !isPaused; const b = document.getElementById('pause-btn');
+            isPaused = !isPaused;
+            const b = document.getElementById('pause-btn');
             b.innerText = isPaused ? "다시 시작" : "일시 중지";
             b.style.backgroundColor = isPaused ? "#4CAF50" : "#ff9800";
         }
 
-        /* [cite: 2026-03-05] 다이내믹 성적표 멘트 엔진 */
+        /* [cite: 2026-03-05] 성적 등급별 피드백 로직 */
         function getFeedback(pct) {
-            if(pct >= 100) return "Mastered! 상위 0.1% 어휘력에 도달했습니다! 🏆";
-            if(pct >= 90) return "Excellent! 당신은 이제 상위 1% 우등생입니다! ⭐";
-            if(pct >= 70) return "Great Job! 조금만 더 반복하면 완벽해집니다! 👍";
-            return "Good Try! 반복 학습이 장기 기억의 지름길입니다! 🔥";
+            if(pct >= 100) return "Mastered! 상위 0.1% 어휘력 도달! 🏆";
+            if(pct >= 90) return "Excellent! 당신은 이제 상위 1% 우등생! ⭐";
+            if(pct >= 70) return "Great Job! 조금만 더 하면 완벽해집니다! 👍";
+            return "Good Try! 반복 학습이 장기 기억의 지름길! 🔥";
         }
 
         function showFinalReport() {
             const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
-            stats.sessions++; stats.lastTime = Date.now();
+            stats.sessions++;
+            stats.lastTime = Date.now();
             localStorage.setItem(key, JSON.stringify(stats));
 
             const pct = (score / library[mode].length) * 100;
+            
             document.getElementById('rep-name').innerText = `${user.name}님, 완수!🎯`;
             document.getElementById('rep-course').innerText = (mode === 'middle' ? '중등' : '고등');
             document.getElementById('rep-score').innerText = `${score} / ${library[mode].length} 점`;
             document.getElementById('rep-session').innerText = `${stats.sessions}회차`;
             document.getElementById('rep-mention').innerText = getFeedback(pct);
+            
             document.getElementById('report-overlay').style.display = 'flex';
         }
 
         function kakaoShare() {
             const stats = JSON.parse(localStorage.getItem(`tv_stats_${user.name}_${user.phone}`));
             const pct = (score / library[mode].length) * 100;
-            const msg = `[트리거보카] ${user.name} 학생 리포트\n\n- 코스: ${mode}\n- 점수: ${score}/${library[mode].length}\n- 오늘 세션: ${stats.sessions}회\n\n평가: ${getFeedback(pct)}`;
+            const msg = `[트리거보카] ${user.name} 학생 학습 리포트\n\n- 코스: ${mode === 'middle' ? '중등' : '고등'}\n- 점수: ${score}/${library[mode].length}\n- 오늘 누적 세션: ${stats.sessions}회\n\n원장님 총평: ${getFeedback(pct)}`;
+            
             if (Kakao.isInitialized()) {
-                Kakao.Share.sendDefault({ objectType: 'text', text: msg, link: { mobileWebUrl: window.location.href, webUrl: window.location.href } });
-            } else { alert("결과가 복사되었습니다!"); }
+                Kakao.Share.sendDefault({
+                    objectType: 'text',
+                    text: msg,
+                    link: { mobileWebUrl: window.location.href, webUrl: window.location.href }
+                });
+            } else {
+                alert("결과가 복사되었습니다! 카톡에 붙여넣어 주세요.");
+            }
         }
 
+        /* [cite: 2026-03-04, 2026-03-05] 쿨타임 시스템 */
         function runCooldownCheck() {
             const stats = JSON.parse(localStorage.getItem(`tv_stats_${user.name}_${user.phone}`) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
-            const wait = 600000;
+            const wait = 600000; // 10분 강제 쿨타임 [cite: 2026-03-04]
+            
             if(diff < wait && stats.sessions > 0) {
                 document.querySelectorAll('.course-btn').forEach(b => b.disabled = true);
-                const area = document.getElementById('cooldown-area'); area.style.display = 'block';
+                const area = document.getElementById('cooldown-area');
+                area.style.display = 'block';
                 document.getElementById('admin-reset').style.display = 'inline-block';
+                
                 const itv = setInterval(() => {
                     const rem = wait - (Date.now() - stats.lastTime);
                     if(rem <= 0) { clearInterval(itv); location.reload(); }
-                    else area.innerText = `⏳ 휴식 중: ${Math.floor(rem/60000)}분 ${Math.floor((rem%60000)/1000)}초 남음`;
+                    else {
+                        const m = Math.floor(rem / 60000);
+                        const s = Math.floor((rem % 60000) / 1000);
+                        area.innerText = `⏳ 휴식 중: ${m}분 ${s}초 남음`;
+                    }
                 }, 1000);
             }
         }
-        function forceReset() { localStorage.removeItem(`tv_stats_${user.name}_${user.phone}`); location.reload(); }
+
+        function forceReset() {
+            localStorage.removeItem(`tv_stats_${user.name}_${user.phone}`);
+            location.reload();
+        }
     </script>
 </body>
 </html>
