@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v7.7 - Master Full Edition</title>
+    <title>Trigger Voca v7.8 - Master Full Edition</title>
     
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js" 
             integrity="sha384-l+xbElFSnPZ2rOaPrU//2FF5B4LB8FiX5q4fXYTlfcG4PGpMkE1vcL7kNXI6Cci0" 
@@ -64,7 +64,6 @@
             display: block;
         }
 
-        /* [cite: 2026-03-05] 입력 폼 스타일 */
         input {
             width: 100%;
             padding: 22px;
@@ -84,7 +83,7 @@
             font-weight: 900;
             padding: 12px 20px;
             border-radius: 20px 8px;
-            border: 3.5px solid #ef6c00;
+            border: 3px solid #ef6c00;
             display: inline-block;
             margin-bottom: 30px;
         }
@@ -114,7 +113,6 @@
             user-select: none;
         }
 
-        /* [cite: 2026-03-05] 버튼 시스템 */
         button {
             background-color: var(--primary);
             color: var(--white);
@@ -141,7 +139,6 @@
             transform: none;
         }
 
-        /* [cite: 2026-03-05] 반복 설정 버튼 레이아웃 */
         .option-box {
             background: #ffffff;
             border: 4px solid var(--dark);
@@ -165,7 +162,7 @@
             gap: 12px;
         }
 
-        /* 버튼 내부 텍스트 줄바꿈 적용 */
+        /* 반복 버튼 내부 텍스트 줄바꿈 적용 */
         .rep-choice {
             padding: 14px 10px;
             font-size: 1.1rem;
@@ -186,7 +183,7 @@
             box-shadow: 4px 4px 0px 0px var(--dark);
         }
 
-        /* 시간 바 위치 전면 수정 (게이지 별도 분리) */
+        /* 시간 바 위치 수정 (게이지 영역 분리) */
         .gauge-area {
             width: 100%;
             height: 20px;
@@ -205,7 +202,6 @@
             transition: width 0.3s linear;
         }
 
-        /* [cite: 2026-03-04, 2026-03-05] 학습 카드 본체 */
         .card {
             position: relative;
             padding: 90px 20px;
@@ -216,6 +212,7 @@
             display: flex;
             flex-direction: column;
             justify-content: center;
+            overflow: hidden; 
             box-shadow: 15px 15px 0px 0px #eeeeee;
         }
 
@@ -262,7 +259,6 @@
             transform: scale(1.18);
         }
 
-        /* [cite: 2026-03-05] 음성 설정 인터페이스 */
         .audio-ctrl {
             display: flex;
             justify-content: flex-end;
@@ -292,7 +288,7 @@
             transition: 0.2s;
         }
 
-        /* 테스트 보기 버그 수정 (글자색 강제 적용) */
+        /* 테스트 보기 가독성 수정 */
         .test-option {
             background-color: var(--white);
             border: 4px solid var(--dark);
@@ -306,24 +302,21 @@
             width: 100%;
             cursor: pointer;
             text-align: center;
-            color: var(--dark) !important; /* 폰트 안 보이던 문제 해결 [cite: 2026-03-05] */
+            color: var(--dark) !important; /* 폰트 강제 노출 */
         }
 
         .test-option.correct {
             background-color: var(--green) !important;
             color: var(--white) !important;
             border-color: var(--dark);
-            box-shadow: 6px 6px 0px 0px var(--dark);
         }
 
         .test-option.wrong {
             background-color: var(--error) !important;
             color: var(--white) !important;
             border-color: var(--dark);
-            box-shadow: 6px 6px 0px 0px var(--dark);
         }
 
-        /* [cite: 2026-03-04, 2026-03-05] 성적표 오버레이 */
         #report-overlay {
             display: none;
             position: fixed;
@@ -365,6 +358,7 @@
             color: var(--primary);
             font-weight: 900;
             line-height: 1.5;
+            padding: 0 10px;
         }
 
         .kakao-send {
@@ -435,10 +429,8 @@
 
             <div class="card">
                 <div id="word-progress" class="progress-text"></div>
-                
                 <h1 id="display-word" class="word">Trigger</h1>
                 <div id="countdown-num" class="countdown-overlay" style="display:none;"></div>
-                
                 <div id="meanings-box"></div>
                 <div id="test-box" style="display:none; width: 100%;"></div>
             </div>
@@ -469,18 +461,14 @@
     </div>
 
     <script>
-        /* ---------------------------------------------------------
-           [JavaScript] 비즈니스 로직 완결판 (Full Script) [cite: 2026-03-05]
-        --------------------------------------------------------- */
+        /* [cite: 2026-03-05] 비즈니스 로직 완결판 (Full Script) */
         
-        // 카카오 공식 SDK 초기화 [cite: 2026-03-05]
         try { 
             Kakao.init('fbb1520306ffaad0a882e993109a801c'); 
         } catch(e) { 
             console.error("Kakao SDK Error"); 
         }
 
-        // [cite: 2026-03-05] 마스터 단어 데이터 (정오답 데이터 통합)
         const library = {
             middle: [
                 {word:"appear", mean:["나타나다", "보이다"], color:"#E8F5E9", wrong:["사라지다", "공부하다", "달리다"]},
@@ -492,7 +480,6 @@
             ]
         };
 
-        // [cite: 2026-03-04] Step 0. 누적 복습용 데이터
         const reviewLibrary = [
             {word:"memory", mean:["기억"], wrong:["망각", "사랑", "하늘"]},
             {word:"focus", mean:["집중하다"], wrong:["흐리다", "달리다", "자다"]}
@@ -500,14 +487,13 @@
 
         let user = { name: "" };
         let mode = "";
-        let repeats = 2; // 기본 반복 횟수
+        let repeats = 2; 
         let isPaused = false;
         let activeStudy = false;
         let muted = false;
         let timerId = null;
         let score = 0;
         let countdownAborted = false;
-        let inReviewGate = false;
 
         window.onload = function() {
             const data = localStorage.getItem('tv_user_info');
@@ -515,7 +501,7 @@
                 user = JSON.parse(data);
                 document.getElementById('welcome-msg').innerText = `${user.name}님,`;
                 changeView('view-mode');
-                runCooldownCheck(); [cite: 2026-03-05]
+                runCooldownCheck(); 
             } else {
                 changeView('view-login');
             }
@@ -552,8 +538,6 @@
             const views = document.querySelectorAll('.view');
             views.forEach(v => v.classList.remove('active'));
             document.getElementById(id).classList.add('active');
-            
-            // 학습 화면 진입 시 자동 카운트다운 트리거 [cite: 2026-03-05]
             if(id === 'view-study') autoCountdown();
         }
 
@@ -578,7 +562,7 @@
                 await new Promise(r => setTimeout(r, 1000));
             }
             
-            if(!activeStudy) launchReviewGate(); [cite: 2026-03-05]
+            if(!activeStudy) launchReviewGate(); 
         }
 
         function skipCountdown() {
@@ -590,37 +574,34 @@
         async function launchReviewGate() {
             if(activeStudy) return;
             activeStudy = true;
-            inReviewGate = true;
             
             document.getElementById('countdown-num').style.display = 'none';
             document.getElementById('display-word').classList.remove('small');
             document.getElementById('start-btn-area').style.display = 'none';
             
-            document.getElementById('display-word').innerText = "복습 게이트 오픈!";
+            document.getElementById('display-word').innerText = "누적 복습 시작!";
             await new Promise(r => setTimeout(r, 1500));
 
             for(let i=0; i < reviewLibrary.length; i++) {
                 document.getElementById('word-progress').innerText = `REVEIW: ${i+1}/${reviewLibrary.length}`;
-                await testQuestion(reviewLibrary[i], 4000); // 복습은 4초 제한
+                await testQuestion(reviewLibrary[i], 4000); 
             }
             
-            inReviewGate = false;
-            launchMainSession(); [cite: 2026-03-05]
+            launchMainSession(); 
         }
 
-        /* [cite: 2026-03-04, 2026-03-05] 본 학습 세션 시작 */
+        /* [cite: 2026-03-05] 본 학습 세션 */
         async function launchMainSession() {
             document.getElementById('pause-area').style.display = 'flex';
             document.getElementById('test-box').style.display = 'none';
             
             const words = library[mode];
             for(let i=0; i < words.length; i++) {
-                // [cite: 2026-03-05] 설정한 횟수만큼 반복 및 발음
                 for(let r=0; r < repeats; r++) {
                     if(!activeStudy) return;
                     document.getElementById('word-progress').innerText = `${i+1} / ${words.length} (${r+1}/${repeats}회차)`;
                     
-                    // 회차마다 발음 자동 재생 [cite: 2026-03-05]
+                    // 회차마다 발음 재생 [cite: 2026-03-05]
                     playWord(words[i].word);
                     await wordCycle(words[i], 6000);
                 }
@@ -664,7 +645,7 @@
             });
         }
 
-        /* [cite: 2026-03-04, 2026-03-05] 마스터 테스트 엔진 (5초 제한) */
+        /* [cite: 2026-03-05] 마스터 테스트 엔진 (5초 제한) */
         async function runMasterTest() {
             document.getElementById('pause-area').style.display = 'none';
             document.getElementById('meanings-box').innerHTML = "";
@@ -676,7 +657,7 @@
             
             for(let i=0; i < words.length; i++) {
                 document.getElementById('word-progress').innerText = `TEST: ${i+1} / ${words.length}`;
-                await testQuestion(words[i], 5000); // 실전 테스트는 5초 제한
+                await testQuestion(words[i], 5000); 
             }
             
             showFinalReport();
@@ -691,29 +672,27 @@
                 display.innerText = data.word;
                 document.body.style.backgroundColor = "#ffffff";
                 
-                // 보기 무작위 셔플 [cite: 2026-03-05]
-                const allOptions = [...data.wrong, data.mean[0]].sort(() => Math.random() - 0.5);
+                const pool = [...data.wrong, data.mean[0]].sort(() => Math.random() - 0.5);
                 box.innerHTML = "";
                 
-                allOptions.forEach(optText => {
-                    const btn = document.createElement('button');
-                    btn.className = 'test-option';
-                    btn.innerText = optText;
+                pool.forEach(txt => {
+                    const b = document.createElement('button');
+                    b.className = 'test-option';
+                    b.innerText = txt;
                     
-                    // [cite: 2026-03-05] 클릭 반응 보장 로직
-                    btn.onclick = () => {
+                    b.onclick = () => {
                         clearInterval(timerId);
                         const allBtns = document.querySelectorAll('.test-option');
-                        allBtns.forEach(b => {
-                            b.disabled = true;
-                            if(b.innerText === data.mean[0]) b.classList.add('correct');
-                            else if(b === btn) b.classList.add('wrong');
+                        allBtns.forEach(btn => {
+                            btn.disabled = true;
+                            if(btn.innerText === data.mean[0]) btn.classList.add('correct');
+                            else if(btn === b) btn.classList.add('wrong');
                         });
                         
-                        if(optText === data.mean[0]) score++;
+                        if(txt === data.mean[0]) score++;
                         setTimeout(resolve, 1200);
                     };
-                    box.appendChild(btn);
+                    box.appendChild(b);
                 });
 
                 let elapsed = 0;
@@ -725,7 +704,6 @@
                     
                     if(elapsed >= limit) { 
                         clearInterval(timerId); 
-                        // 시간 초과 시 정답만 보여주고 넘어감
                         document.querySelectorAll('.test-option').forEach(b => {
                             if(b.innerText === data.mean[0]) b.classList.add('correct');
                             b.disabled = true;
@@ -743,11 +721,10 @@
             b.style.backgroundColor = isPaused ? "#4CAF50" : "#ff9800";
         }
 
-        /* [cite: 2026-03-05] 등급별 다이내믹 피드백 엔진 */
         function getFeedback(pct) {
-            if(pct >= 100) return "Mastered! 상위 0.1% 어휘력에 도달했습니다! 🏆";
-            if(pct >= 90) return "Excellent! 당신은 이제 상위 1% 우등생입니다! ⭐";
-            if(pct >= 70) return "Great Job! 조금만 더 반복하면 완벽해집니다! 👍";
+            if(pct >= 100) return "Mastered! 상위 0.1% 어휘력 도달! 🏆";
+            if(pct >= 90) return "Excellent! 당신은 이제 상위 1% 우등생! ⭐";
+            if(pct >= 70) return "Great Job! 조금만 더 하면 완벽해집니다! 👍";
             return "Good Try! 반복 학습이 장기 기억의 지름길입니다! 🔥";
         }
 
@@ -786,7 +763,6 @@
             }
         }
 
-        /* [cite: 2026-03-04, 2026-03-05] 쿨타임 시스템 메인 화면 연동 */
         function runCooldownCheck() {
             const stats = JSON.parse(localStorage.getItem(`tv_stats_${user.name}_${user.phone}`) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
