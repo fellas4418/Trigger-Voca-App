@@ -234,7 +234,7 @@
             const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
-            const cooldownMs = 600000; // 10분
+            const cooldownMs = 10000; // 10분
             
             const display = document.getElementById('cooldown-display');
             const btns = document.querySelectorAll('.course-btn');
