@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v8.0 - Master Logic Full Edition</title>
+    <title>Trigger Voca v8.3 - Ultimate Master Full Edition</title>
     
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js" 
             integrity="sha384-l+xbElFSnPZ2rOaPrU//2FF5B4LB8FiX5q4fXYTlfcG4PGpMkE1vcL7kNXI6Cci0" 
@@ -14,8 +14,8 @@
            [CSS Section] Doodle UI 디자인 시스템 (전체 보존) [cite: 2026-03-05]
         --------------------------------------------------------- */
         :root {
-            --primary: #ff6b4a; /* 주황 포인트 컬러 */
-            --bg: #fdf6e3;    /* 크림 배경 컬러 */
+            --primary: #ff6b4a; /* 주황 포인트 */
+            --bg: #fdf6e3;    /* 크림 배경 */
             --white: #ffffff;
             --dark: #333333;
             --green: #4caf50;
@@ -39,10 +39,45 @@
             width: 94%;
             max-width: 420px;
             text-align: center;
+            position: relative;
         }
 
+        /* 로고 화면 스타일 및 레이어 설정 */
+        #view-logo {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--bg);
+            z-index: 10000;
+            transition: opacity 0.6s ease;
+        }
+
+        .logo-text {
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: var(--dark);
+            margin: 0;
+            text-transform: uppercase;
+            letter-spacing: 5px;
+        }
+
+        .logo-underline {
+            width: 260px;
+            height: 12px;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 10" preserveAspectRatio="none"><path d="M0 5 Q 5 0, 10 5 T 20 5 T 30 5 T 40 5 T 50 5 T 60 5 T 70 5 T 80 5 T 90 5 T 100 5" stroke="%23ff6b4a" stroke-width="3" fill="transparent"/></svg>');
+            background-size: 45px 12px;
+            margin-top: 15px;
+        }
+
+        /* 공통 헤더 스타일 */
         .app-header {
-            font-size: 1.25rem;
+            font-size: 1.3rem;
             font-weight: 900;
             color: var(--dark);
             margin-bottom: 25px;
@@ -56,7 +91,7 @@
             background-color: var(--white);
             padding: 45px 30px;
             border-radius: 40px 10px 40px 10px;
-            border: 4px solid var(--dark);
+            border: 4.5px solid var(--dark);
             box-shadow: var(--shadow);
         }
 
@@ -64,7 +99,7 @@
             display: block;
         }
 
-        /* [cite: 2026-03-05] 입력 폼 스타일 */
+        /* 입력 폼 요소 [cite: 2026-03-05] */
         input {
             width: 100%;
             padding: 22px;
@@ -72,7 +107,7 @@
             border: 3.5px solid var(--dark);
             border-radius: 18px;
             box-sizing: border-box;
-            font-size: 1.15rem;
+            font-size: 1.2rem;
             font-weight: 900;
             box-shadow: 4px 4px 0px 0px #eeeeee;
         }
@@ -106,15 +141,7 @@
             border: 3.5px solid var(--dark);
         }
 
-        .agree-container label {
-            font-size: 1rem;
-            font-weight: 900;
-            color: #444444;
-            cursor: pointer;
-            user-select: none;
-        }
-
-        /* [cite: 2026-03-05] 버튼 시스템 */
+        /* 버튼 컴포넌트 [cite: 2026-03-05] */
         button {
             background-color: var(--primary);
             color: var(--white);
@@ -141,7 +168,7 @@
             transform: none;
         }
 
-        /* [cite: 2026-03-05] 반복 설정 버튼 레이아웃 */
+        /* 반복 설정 옵션 */
         .option-box {
             background: #ffffff;
             border: 4px solid var(--dark);
@@ -157,7 +184,7 @@
             display: block;
             margin-bottom: 15px;
             color: var(--dark);
-            font-size: 1.05rem;
+            font-size: 1.1rem;
         }
 
         .repeat-btn-group {
@@ -165,7 +192,6 @@
             gap: 12px;
         }
 
-        /* 버튼 내부 텍스트 줄바꿈 적용 */
         .rep-choice {
             padding: 14px 10px;
             font-size: 1.1rem;
@@ -186,13 +212,13 @@
             box-shadow: 4px 4px 0px 0px var(--dark);
         }
 
-        /* 시간 바 위치 전면 수정 (게이지 영역 독립 분리) */
+        /* 독립된 상단 게이지 바 */
         .gauge-area {
             width: 100%;
-            height: 20px;
+            height: 24px;
             background: #eeeeee;
             border: 4px solid var(--dark);
-            border-radius: 12px;
+            border-radius: 14px;
             margin-bottom: 15px;
             overflow: hidden;
             position: relative;
@@ -205,19 +231,19 @@
             transition: width 0.3s linear;
         }
 
-        /* [cite: 2026-03-04, 2026-03-05] 학습 카드 본체 */
+        /* [cite: 2026-03-05] 학습 카드 (음영 제거 및 잘림 방지) */
         .card {
             position: relative;
-            padding: 90px 20px;
+            padding: 95px 20px;
             border: 4.5px solid var(--dark);
             border-radius: 55px 15px 55px 15px;
             background-color: var(--white);
-            min-height: 320px;
+            min-height: 340px;
             display: flex;
             flex-direction: column;
             justify-content: center;
-            overflow: hidden; 
-            box-shadow: none; /* 시야 방해 음영 제거 */
+            box-shadow: none; /* 지시하신 대로 음영 제거 */
+            overflow: hidden;
         }
 
         .progress-text {
@@ -226,12 +252,12 @@
             right: 40px;
             font-weight: 900;
             color: #bbbbbb;
-            font-size: 1rem;
+            font-size: 1.05rem;
         }
 
-        /* 글자 길이에 따른 자동 폰트 크기 및 잘림 방지 */
         .word {
-            font-size: clamp(2.2rem, 15vw, 4.5rem); 
+            /* 글자 길이에 따른 자동 폰트 크기 및 잘림 방지 [cite: 2026-03-05] */
+            font-size: clamp(2.3rem, 15vw, 4.8rem); 
             font-weight: 900;
             color: var(--dark);
             margin: 0;
@@ -240,18 +266,25 @@
         }
 
         .word.small {
-            font-size: 2.2rem !important;
+            font-size: 2.3rem !important;
         }
 
         .countdown-overlay {
-            font-size: 6.5rem;
+            font-size: 7rem;
             color: var(--primary);
             font-weight: 900;
-            margin-top: 30px;
+            margin-top: 35px;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
         }
 
         .meaning {
-            font-size: 2.4rem;
+            font-size: 2.5rem;
             color: #999999;
             opacity: 0.05;
             transition: all 0.4s ease;
@@ -262,10 +295,10 @@
             opacity: 1;
             color: var(--dark);
             font-weight: 900;
-            transform: scale(1.18);
+            transform: scale(1.2);
         }
 
-        /* [cite: 2026-03-05] 음성 설정 인터페이스 */
+        /* [cite: 2026-03-05] 음성 및 무음 제어 UI */
         .audio-ctrl {
             display: flex;
             justify-content: flex-end;
@@ -275,11 +308,11 @@
         }
 
         .audio-msg {
-            font-size: 0.9rem;
+            font-size: 0.95rem;
             color: #999999;
             font-weight: 900;
             background-color: #ffffff;
-            padding: 5px 12px;
+            padding: 5px 15px;
             border-radius: 12px;
             border: 2.5px solid #eeeeee;
         }
@@ -288,28 +321,28 @@
             background: none;
             border: none;
             box-shadow: none;
-            font-size: 2.2rem;
+            font-size: 2.4rem;
             width: auto;
             padding: 0;
             cursor: pointer;
             transition: 0.2s;
         }
 
-        /* 테스트 보기 버그 수정 (글자색 강제 적용) */
+        /* 테스트 보기 폰트 컬러 강제 고정 */
         .test-option {
             background-color: var(--white);
             border: 4px solid var(--dark);
             border-radius: 20px 8px;
             padding: 26px;
-            margin-top: 18px;
-            font-size: 1.4rem;
+            margin-top: 20px;
+            font-size: 1.45rem;
             font-weight: 900;
             box-shadow: 6px 6px 0px 0px #eeeeee;
             transition: all 0.2s ease;
             width: 100%;
             cursor: pointer;
             text-align: center;
-            color: var(--dark) !important; /* 폰트 강제 노출 [cite: 2026-03-05] */
+            color: var(--dark) !important; /* 가독성 버그 해결 [cite: 2026-03-05] */
         }
 
         .test-option.correct {
@@ -326,7 +359,7 @@
             box-shadow: 6px 6px 0px 0px var(--dark);
         }
 
-        /* [cite: 2026-03-04, 2026-03-05] 성적표 오버레이 */
+        /* [cite: 2026-03-04, 2026-03-05] 성적표 및 쿨타임 */
         #report-overlay {
             display: none;
             position: fixed;
@@ -343,9 +376,9 @@
         .report-card {
             background-color: var(--white);
             width: 92%;
-            max-width: 400px;
-            padding: 55px 45px;
-            border-radius: 60px 15px;
+            max-width: 410px;
+            padding: 60px 45px;
+            border-radius: 65px 15px;
             border: 8px solid var(--primary);
             text-align: center;
             box-shadow: 25px 25px 0px 0px rgba(0,0,0,0.3);
@@ -356,13 +389,13 @@
             justify-content: space-between;
             padding: 22px 0;
             border-bottom: 4px dashed #f0f0f0;
-            font-size: 1.35rem;
+            font-size: 1.4rem;
             font-weight: 900;
         }
 
         .mention-text {
             margin-top: 45px;
-            font-size: 1.6rem;
+            font-size: 1.65rem;
             color: var(--primary);
             font-weight: 900;
             line-height: 1.5;
@@ -379,41 +412,46 @@
 <body>
 
     <div id="app">
-        <div class="app-header">Trigger Voca</div>
+        <div id="view-logo">
+            <h1 class="logo-text">Trigger<br>Voca</h1>
+            <div class="logo-underline"></div>
+        </div>
 
         <div id="view-login" class="view">
+            <div class="app-header">Trigger Voca</div>
             <span class="benefit-tag">🎁 DOODLE EVENT</span>
-            <h2 style="margin-bottom:20px; font-size: 1.8rem;">학습자 정보 입력</h2>
+            <h2 style="margin-bottom:20px; font-size: 1.9rem;">학습자 정보 입력</h2>
             <input type="text" id="user-name" placeholder="성함 (필수)">
             <input type="tel" id="user-phone" placeholder="전화번호 전체 (선택)">
             <div class="agree-container" onclick="document.getElementById('user-agree').click()">
                 <input type="checkbox" id="user-agree" onclick="event.stopPropagation()">
-                <label for="user-agree">데이터 기록 및 서비스 보관 동의 (필수)</label>
+                <label for="user-agree">기록 보관 및 서비스 동의 (필수)</label>
             </div>
             <button onclick="handleLogin()">학습 시작하기!</button>
         </div>
 
         <div id="view-mode" class="view">
-            <h2 id="welcome-msg" style="margin-bottom:35px; font-size: 1.9rem;"></h2>
+            <div class="app-header">Trigger Voca</div>
+            <h2 id="welcome-msg" style="margin-bottom:35px; font-size: 2rem;"></h2>
             
             <div class="option-box">
-                <span class="option-label">학습 강도 설정</span>
+                <span class="option-label">학습 강도 설정 (반복 횟수)</span>
                 <div class="repeat-btn-group">
                     <button id="btn-rep2" class="rep-choice active" onclick="updateRepeat(2)">2회 반복<br>(기본)</button>
                     <button id="btn-rep3" class="rep-choice" onclick="updateRepeat(3)">3회 반복<br>(강력)</button>
                 </div>
             </div>
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:22px;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:25px;">
                 <button onclick="pickCourse('middle')" style="background-color:#bdbdbd;">중등 코스</button>
                 <button onclick="pickCourse('high')" style="background-color:#2196F3;">고등 코스</button>
             </div>
 
-            <div id="cooldown-area" style="display:none; margin-top:40px; padding:25px; border:4px solid #ef6c00; border-radius:24px; font-weight:900; color:#ef6c00; background-color:#fff3e0;"></div>
+            <div id="cooldown-area" style="display:none; margin-top:45px; padding:30px; border:4px solid #ef6c00; border-radius:25px; font-weight:900; color:#ef6c00; background-color:#fff3e0;"></div>
             
             <button id="admin-reset" onclick="forceReset()" 
-                    style="display:none; background:none; border:none; color:#999; text-decoration:underline; margin-top:35px; cursor:pointer; font-weight: 900;">
-                (테스트용) 데이터 초기화
+                    style="display:none; background:none; border:none; color:#999; text-decoration:underline; margin-top:40px; cursor:pointer; font-weight: 900;">
+                (테스트용) 모든 기록 초기화
             </button>
         </div>
 
@@ -436,13 +474,8 @@
                 <div id="test-box" style="display:none; width: 100%;"></div>
             </div>
 
-            <div id="start-btn-area">
-                <button id="skip-count-btn" onclick="skipCountdown()">바로 시작!</button>
-            </div>
-            
-            <div id="pause-area" style="display:none; margin-top:30px;">
-                <button id="pause-btn" onclick="handlePause()" style="background-color:#ff9800;">일시 중지</button>
-            </div>
+            <div id="start-btn-area"><button id="skip-count-btn" onclick="skipCountdown()">바로 시작!</button></div>
+            <div id="pause-area" style="display:none; margin-top:35px;"><button id="pause-btn" onclick="handlePause()" style="background-color:#ff9800;">일시 중지</button></div>
         </div>
     </div>
 
@@ -453,8 +486,8 @@
             <div class="stat-line"><span>테스트 점수</span><b id="rep-score" style="color:var(--primary);"></b></div>
             <div class="stat-line"><span>오늘의 세션</span><b id="rep-session"></b></div>
             <p id="rep-mention" class="mention-text"></p>
-            <button class="kakao-send" onclick="kakaoShare()">💬 학부모님께 결과 전송</button>
-            <p onclick="location.reload()" style="margin-top:40px; color:#aaa; cursor:pointer; font-weight:900; text-decoration:underline;">닫기</p>
+            <button class="kakao-send" onclick="kakaoShare()">💬 결과 전송</button>
+            <p onclick="location.reload()" style="margin-top:45px; color:#aaa; cursor:pointer; font-weight:900; text-decoration:underline;">닫기</p>
         </div>
     </div>
 
@@ -463,10 +496,12 @@
            [JavaScript] 비즈니스 로직 완결판 (Full Script) [cite: 2026-03-05]
         --------------------------------------------------------- */
         
+        // 카카오 공식 SDK 초기화 [cite: 2026-03-05]
         try { 
             Kakao.init('fbb1520306ffaad0a882e993109a801c'); 
-        } catch(e) { console.error("SDK Load Fail"); }
+        } catch(e) { console.error("SDK Init Fail"); }
 
+        // 마스터 단어 라이브러리
         const library = {
             middle: [
                 {word:"appear", mean:["나타나다", "보이다"], color:"#E8F5E9", wrong:["사라지다", "공부하다", "달리다"]},
@@ -487,14 +522,24 @@
         let user = { name: "" }, mode = "", repeats = 2, isPaused = false, activeStudy = false, muted = false;
         let timerId = null, score = 0, countdownAborted = false, inReview = false;
 
+        /* 로고 진입 버그 수정 로직 고정 */
         window.onload = function() {
-            const data = localStorage.getItem('tv_user_info');
-            if (data) {
-                user = JSON.parse(data);
-                document.getElementById('welcome-msg').innerText = `${user.name}님,`;
-                changeView('view-mode');
-                runCooldownCheck(); [cite: 2026-03-05]
-            } else { changeView('view-login'); }
+            const logoView = document.getElementById('view-logo');
+            
+            setTimeout(() => {
+                const data = localStorage.getItem('tv_user_info');
+                if (data) {
+                    user = JSON.parse(data);
+                    document.getElementById('welcome-msg').innerText = `${user.name}님,`;
+                    changeView('view-mode');
+                    runCooldownCheck(); 
+                } else {
+                    changeView('view-login');
+                }
+                // 부드럽게 전환
+                logoView.style.opacity = '0';
+                setTimeout(() => logoView.style.display = 'none', 600);
+            }, 1900); 
         };
 
         function handleLogin() {
@@ -517,7 +562,8 @@
         function changeView(id) {
             const views = document.querySelectorAll('.view');
             views.forEach(v => v.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+            const target = document.getElementById(id);
+            if(target) target.classList.add('active');
             if(id === 'view-study') autoCountdown();
         }
 
@@ -529,19 +575,18 @@
             const countOverlay = document.getElementById('countdown-num');
             display.innerText = "준비해 주세요"; display.classList.add('small');
             countOverlay.style.display = 'block';
-
             for(let i=3; i > 0; i--) {
                 if(countdownAborted) break;
                 countOverlay.innerText = i;
                 await new Promise(r => setTimeout(r, 1000));
             }
-            if(!activeStudy) launchReviewStep(); [cite: 2026-03-05]
+            if(!activeStudy) launchReviewGate(); 
         }
 
-        function skipCountdown() { countdownAborted = true; launchReviewStep(); }
+        function skipCountdown() { countdownAborted = true; launchReviewGate(); }
 
-        /* 실전 오답 기반 복습 관문 로직 */
-        async function launchReviewStep() {
+        /* [cite: 2026-03-04] Step 0. 누적 복습 실전 로직 */
+        async function launchReviewGate() {
             if(activeStudy) return;
             activeStudy = true;
             inReview = true;
@@ -550,20 +595,19 @@
             document.getElementById('display-word').classList.remove('small');
             document.getElementById('start-btn-area').style.display = 'none';
             
-            // 실제 기기에 저장된 오답 리스트 로드
+            // 실제 기기에 저장된 오답 리스트 로드 [cite: 2026-03-05]
             const errorPool = JSON.parse(localStorage.getItem('tv_error_pool') || '[]');
             const reviewWords = errorPool.length > 0 ? errorPool.slice(-3) : fallbackReview;
             
             document.getElementById('display-word').innerText = "누적 복습 시작!";
             await new Promise(r => setTimeout(r, 1500));
-
             for(let i=0; i < reviewWords.length; i++) {
                 document.getElementById('word-progress').innerText = `REVIEW: ${i+1}/${reviewWords.length}`;
-                await testQuestion(reviewWords[i], 4000); 
+                await testQuestion(reviewWords[i], 4500); 
             }
             
             inReview = false;
-            launchMainSession(); [cite: 2026-03-05]
+            launchMainSession(); 
         }
 
         async function launchMainSession() {
@@ -574,7 +618,7 @@
                 for(let r=0; r < repeats; r++) {
                     if(!activeStudy) return;
                     document.getElementById('word-progress').innerText = `${i+1} / ${words.length} (${r+1}/${repeats}회차)`;
-                    playWord(words[i].word); // 회차마다 발음
+                    playWord(words[i].word); // [cite: 2026-03-05] 매 회차 발음 재생 고정
                     await wordCycle(words[i], 6000);
                 }
             }
@@ -592,8 +636,8 @@
                     if(!isPaused) {
                         elapsed += 100; bar.style.width = (elapsed / time * 100) + '%';
                         const list = document.querySelectorAll('.meaning');
-                        const idx = Math.floor((elapsed / time) * data.mean.length);
-                        list.forEach((el, i) => { if(i === idx) el.classList.add('active'); else el.classList.remove('active'); });
+                        const activeIdx = Math.floor((elapsed / time) * data.mean.length);
+                        list.forEach((el, idx) => { if(idx === activeIdx) el.classList.add('active'); else el.classList.remove('active'); });
                         if(elapsed >= time) { clearInterval(timerId); resolve(); }
                     }
                 }, 100);
@@ -618,6 +662,8 @@
                 document.getElementById('display-word').innerText = data.word;
                 document.body.style.backgroundColor = "#ffffff";
                 const box = document.getElementById('test-box');
+                
+                // 보기 데이터 복구 및 무작위 셔플 [cite: 2026-03-05]
                 const pool = [...data.wrong, data.mean[0]].sort(() => Math.random() - 0.5);
                 box.innerHTML = "";
                 pool.forEach(txt => {
@@ -631,35 +677,30 @@
                             if(btn.innerText === data.mean[0]) btn.classList.add('correct');
                             else if(btn === b) btn.classList.add('wrong');
                         });
-                        if(txt === data.mean[0]) {
-                            score++;
-                        } else {
-                            saveToErrorPool(data); // 오답 기록
-                        }
-                        setTimeout(resolve, 1200);
+                        if(txt === data.mean[0]) { score++; }
+                        else { saveToErrorPool(data); } // 오답 기록
+                        setTimeout(resolve, 1300);
                     };
                     box.appendChild(b);
                 });
-
                 let elapsed = 0; if(timerId) clearInterval(timerId);
                 timerId = setInterval(() => {
                     elapsed += 100; document.getElementById('timer-bar').style.width = (100 - (elapsed / limit * 100)) + '%';
                     if(elapsed >= limit) { 
                         clearInterval(timerId); 
-                        saveToErrorPool(data); // 시간 초과도 오답 기록
+                        saveToErrorPool(data);
                         document.querySelectorAll('.test-option').forEach(b => { if(b.innerText === data.mean[0]) b.classList.add('correct'); b.disabled = true; });
-                        setTimeout(resolve, 1200);
+                        setTimeout(resolve, 1300);
                     }
                 }, 100);
             });
         }
 
-        /* 오답 데이터 로컬 스토리지 누적 함수 */
         function saveToErrorPool(wordObj) {
             let pool = JSON.parse(localStorage.getItem('tv_error_pool') || '[]');
             if (!pool.find(i => i.word === wordObj.word)) {
                 pool.push(wordObj);
-                if (pool.length > 50) pool.shift(); // 최신 50개 유지
+                if (pool.length > 50) pool.shift();
                 localStorage.setItem('tv_error_pool', JSON.stringify(pool));
             }
         }
@@ -671,10 +712,10 @@
         }
 
         function getFeedback(pct) {
-            if(pct >= 100) return "Mastered! 상위 0.1% 어휘력에 도달했습니다! 🏆";
-            if(pct >= 90) return "Excellent! 당신은 이제 상위 1% 우등생입니다! ⭐";
-            if(pct >= 70) return "Great Job! 조금만 더 하면 완벽해집니다! 👍";
-            return "Good Try! 반복 학습이 장기 기억의 지름길입니다! 🔥";
+            if(pct >= 100) return "Mastered! 상위 0.1% 도달! 🏆";
+            if(pct >= 90) return "Excellent! 당신은 이제 상위 1% 우등생! ⭐";
+            if(pct >= 70) return "Great Job! 조금만 더 반복하세요! 👍";
+            return "Good Try! 반복이 곧 기억력의 자산입니다! 🔥";
         }
 
         function showFinalReport() {
@@ -684,7 +725,7 @@
             localStorage.setItem(key, JSON.stringify(stats));
             const pct = (score / library[mode].length) * 100;
             document.getElementById('rep-name').innerText = `${user.name}님, 완수!🎯`;
-            document.getElementById('rep-course').innerText = (mode === 'middle' ? '중등' : '고등');
+            document.getElementById('rep-course').innerText = (mode === 'middle' ? '중등 코스' : '고등 코스');
             document.getElementById('rep-score').innerText = `${score} / ${library[mode].length} 점`;
             document.getElementById('rep-session').innerText = `${stats.sessions}회차`;
             document.getElementById('rep-mention').innerText = getFeedback(pct);
@@ -694,7 +735,7 @@
         function kakaoShare() {
             const stats = JSON.parse(localStorage.getItem(`tv_stats_${user.name}_${user.phone}`));
             const pct = (score / library[mode].length) * 100;
-            const msg = `[트리거보카] 학습 리포트\n\n- 코스: ${mode}\n- 점수: ${score}/${library[mode].length}\n- 오늘 누적 세션: ${stats.sessions}회\n\n원장님 총평: ${getFeedback(pct)}`;
+            const msg = `[트리거보카] 학습 훈련 리포트\n\n- 점수: ${score}/${library[mode].length}\n- 오늘 누적 세션: ${stats.sessions}회\n\n평가: ${getFeedback(pct)}`;
             if (Kakao.isInitialized()) {
                 Kakao.Share.sendDefault({ objectType: 'text', text: msg, link: { mobileWebUrl: window.location.href, webUrl: window.location.href } });
             } else { alert("결과가 복사되었습니다!"); }
@@ -703,19 +744,18 @@
         function runCooldownCheck() {
             const stats = JSON.parse(localStorage.getItem(`tv_stats_${user.name}_${user.phone}`) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
-            const wait = 600000;
-            if(diff < wait && stats.sessions > 0) {
+            if(diff < 600000 && stats.sessions > 0) {
                 document.querySelectorAll('.course-btn').forEach(b => b.disabled = true);
                 const area = document.getElementById('cooldown-area'); area.style.display = 'block';
                 document.getElementById('admin-reset').style.display = 'inline-block';
-                const itv = setInterval(() => {
-                    const rem = wait - (Date.now() - stats.lastTime);
-                    if(rem <= 0) { clearInterval(itv); location.reload(); }
-                    else area.innerText = `⏳ 휴식 중: ${Math.floor(rem/60000)}분 ${Math.floor((rem%60000)/1000)}초 남음`;
+                const timer = setInterval(() => {
+                    const rem = 600000 - (Date.now() - stats.lastTime);
+                    if(rem <= 0) { clearInterval(timer); location.reload(); }
+                    else area.innerText = `⏳ 휴식 중: ${Math.floor(rem / 60000)}분 ${Math.floor((rem % 60000) / 1000)}초 남음`;
                 }, 1000);
             }
         }
-        function forceReset() { localStorage.removeItem(`tv_stats_${user.name}_${user.phone}`); localStorage.removeItem('tv_error_pool'); location.reload(); }
+        function forceReset() { localStorage.clear(); location.reload(); }
     </script>
 </body>
 </html>
