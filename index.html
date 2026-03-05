@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v5.8</title>
+    <title>Trigger Voca v6.0</title>
     <style>
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
@@ -11,118 +11,115 @@
         .view { display: none; background: white; padding: 35px 25px; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .view.active { display: block; }
         input { width: 100%; padding: 18px; margin: 12px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
-        .benefit-tag { background: #fff3e0; color: #ef6c00; font-size: 0.85rem; font-weight: bold; padding: 8px 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; }
-        /* 체크박스 영역 수정 [cite: 2026-03-05] */
-        .agree-label { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin: 25px 0; cursor: pointer; text-align: left; }
-        .agree-label input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; margin: 0; flex-shrink: 0; }
-        .agree-label span { font-size: 0.9rem; color: #555; cursor: pointer; user-select: none; }
-        button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
-        button:active { transform: scale(0.97); }
-        button:disabled { background: #ccc !important; cursor: not-allowed; }
-        /* 학습 카드 스타일 */
-        .card { position: relative; padding: 50px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; }
+        .agree-label { display: flex; align-items: center; gap: 10px; margin: 20px 0; cursor: pointer; text-align: left; font-size: 0.9rem; color: #666; }
+        .agree-label input { width: 20px; height: 20px; margin: 0; }
+        button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; }
+        button:disabled { background: #ccc !important; }
+        .card { position: relative; padding: 60px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; }
         .word { font-size: 3.5rem; font-weight: 800; margin: 0; }
         .meaning { font-size: 1.8rem; color: #888; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
         .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
         #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; }
+        .nav-link { font-size: 0.8rem; color: #999; text-decoration: underline; cursor: pointer; margin-top: 20px; display: inline-block; }
     </style>
 </head>
 <body>
     <div id="app">
-        <div id="view-login" class="view active">
-            <span class="benefit-tag">🎁 POINT EVENT</span>
-            <h3 style="margin-top:0;">학습자 정보 입력</h3>
-            <p style="font-size:0.9rem; color:#888; margin-bottom:20px;">전화번호를 남겨주시면 학습 완료 후<br><b>추가 혜택(포인트)</b>이 적립됩니다.</p>
-            <input type="text" id="user-name" placeholder="학생 이름 (필수)">
-            <input type="tel" id="user-phone" placeholder="전화번호 전체 (선택사항)">
-            
+        <div id="view-login" class="view">
+            <h3 style="margin-top:0;">학습자 인증</h3>
+            <p style="font-size:0.9rem; color:#888;">최초 1회만 입력하면 됩니다.</p>
+            <input type="text" id="user-name" placeholder="학생 성함 (필수)">
+            <input type="tel" id="user-phone" placeholder="전화번호 (선택사항)">
             <label class="agree-label">
                 <input type="checkbox" id="user-agree">
                 <span>[필수] 서비스 이용 및 데이터 기록 동의</span>
             </label>
-            <button onclick="handleLoginSubmit()">학습 시작하기</button>
+            <button onclick="saveAndGo()">등록 후 시작하기</button>
         </div>
 
         <div id="view-mode" class="view">
-            <h2 id="welcome-msg" style="margin-bottom:30px;"></h2>
+            <h2 id="welcome-msg" style="margin-bottom:10px;"></h2>
+            <p style="color:#666; margin-bottom:30px;">오늘의 단어 학습을 시작합니다.</p>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
                 <button onclick="selectCourse('middle')">중등 코스</button>
                 <button onclick="selectCourse('high')" style="background:#2196F3">고등 코스</button>
             </div>
+            <p class="nav-link" onclick="clearInfo()">정보 재설정</p>
         </div>
 
         <div id="view-study" class="view">
             <div class="card">
                 <div id="timer-bar"></div>
-                <p id="progress-text" style="color:#aaa; font-weight:bold;">준비 완료</p>
-                <h1 class="word" id="display-word">Trigger</h1>
+                <p id="progress-text" style="color:#aaa; font-weight:bold;">준비하세요</p>
+                <h1 class="word" id="display-word">준비하세요</h1>
                 <div id="meaning-container"></div>
             </div>
-            <button id="action-btn" onclick="startLearning()">지금 바로 주입</button>
-            <p id="cooldown-info" style="margin-top:15px; color:#e53935; font-weight:bold; min-height:1.2em;"></p>
+            <button id="action-btn" onclick="startLearning()">지금 바로 시작</button>
+            <div id="cooldown-area" style="display:none; margin-top:20px;">
+                <p id="cooldown-info" style="color:#e53935; font-weight:bold; margin-bottom:15px;"></p>
+                <button onclick="changeView('view-mode')" style="background:#666;">메인 메뉴로</button>
+            </div>
         </div>
     </div>
 
     <script>
         const wordLib = {
-            middle: [
-                {word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"},
-                {word:"happen", meanings:["일어나다", "발생하다"], color:"#E8F5E9"},
-                {word:"stay", meanings:["머무르다"], color:"#E8F5E9"}
-            ],
-            high: [
-                {word:"analyze", meanings:["분석하다"], color:"#FFF3E0"},
-                {word:"assume", meanings:["가정하다"], color:"#FFF3E0"},
-                {word:"confirm", meanings:["확인하다"], color:"#FFF3E0"}
-            ]
+            middle: [{word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"}, {word:"happen", meanings:["일어나다"], color:"#E8F5E9"}],
+            high: [{word:"analyze", meanings:["분석하다"], color:"#FFF3E0"}, {word:"assume", meanings:["가정하다"], color:"#FFF3E0"}]
         };
 
-        let userInfo = { name: "", phone: "" };
+        let userInfo = null;
         let selectedMode = "";
 
-        function changeView(viewId) {
+        // 초기화 로직: 정보가 있으면 바로 메인으로 [cite: 2026-03-05]
+        window.onload = () => {
+            const saved = localStorage.getItem('tv_user_v6');
+            if (saved) {
+                userInfo = JSON.parse(saved);
+                document.getElementById('welcome-msg').innerText = `${userInfo.name}님,`;
+                changeView('view-mode');
+            } else {
+                changeView('view-login');
+            }
+        };
+
+        function changeView(id) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(viewId).classList.add('active');
+            document.getElementById(id).classList.add('active');
         }
 
-        function handleLoginSubmit() {
-            const nameInput = document.getElementById('user-name').value.trim();
-            const phoneInput = document.getElementById('user-phone').value.trim();
-            const agreeChecked = document.getElementById('user-agree').checked;
-
-            if (!nameInput) { alert("성함을 입력해주세요."); return; }
-            if (!agreeChecked) { alert("이용 동의에 체크해주세요."); return; }
-
-            userInfo.name = nameInput;
-            userInfo.phone = phoneInput || "unregistered";
-
-            document.getElementById('welcome-msg').innerText = `${userInfo.name} 학생, 화이팅!`;
+        function saveAndGo() {
+            const name = document.getElementById('user-name').value.trim();
+            const phone = document.getElementById('user-phone').value.trim();
+            if (!name || !document.getElementById('user-agree').checked) { alert("성함 입력과 동의가 필요합니다."); return; }
+            userInfo = { name, phone };
+            localStorage.setItem('tv_user_v6', JSON.stringify(userInfo));
+            document.getElementById('welcome-msg').innerText = `${name}님,`;
             changeView('view-mode');
         }
+
+        function clearInfo() { localStorage.removeItem('tv_user_v6'); location.reload(); }
 
         function selectCourse(mode) {
             selectedMode = mode;
             changeView('view-study');
+            document.getElementById('display-word').innerText = "준비하세요";
+            document.getElementById('progress-text').innerText = "준비 완료";
+            document.getElementById('action-btn').style.display = 'block';
+            document.getElementById('cooldown-area').style.display = 'none';
             updateCooldownStatus();
         }
 
         async function startLearning() {
-            document.getElementById('action-btn').disabled = true;
+            document.getElementById('action-btn').style.display = 'none';
             const words = wordLib[selectedMode];
-            
             for(let i=0; i < words.length; i++) {
                 await runInjection(words[i], i+1, words.length);
             }
-
-            const storageKey = `tv_v58_${userInfo.name}_${userInfo.phone}`;
-            const stats = JSON.parse(localStorage.getItem(storageKey) || '{"sessions":0, "lastTime":0}');
-            stats.sessions += 1;
-            stats.lastTime = Date.now();
-            localStorage.setItem(storageKey, JSON.stringify(stats));
-
-            let alertMsg = "오늘 학습 세션을 완료했습니다! 10분간 휴식하세요.";
-            if (userInfo.phone !== "unregistered") alertMsg += "\n🎁 전화번호 혜택 포인트가 적립되었습니다!";
-            alert(alertMsg);
+            const key = `stats_${userInfo.name}`;
+            const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
+            stats.sessions += 1; stats.lastTime = Date.now();
+            localStorage.setItem(key, JSON.stringify(stats));
             updateCooldownStatus();
         }
 
@@ -131,14 +128,11 @@
                 document.getElementById('display-word').innerText = data.word;
                 document.getElementById('progress-text').innerText = `${cur} / ${total}`;
                 document.body.style.backgroundColor = data.color;
-                
                 const container = document.getElementById('meaning-container');
                 container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
-                
                 const bar = document.getElementById('timer-bar');
                 bar.style.transition = 'none'; bar.style.width = '0%';
                 setTimeout(() => { bar.style.transition = 'width 6000ms linear'; bar.style.width = '100%'; }, 50);
-
                 const elements = document.querySelectorAll('.meaning');
                 elements.forEach((el, i) => {
                     setTimeout(() => {
@@ -146,24 +140,27 @@
                         el.classList.add('active');
                     }, i * (6000 / data.meanings.length));
                 });
-                setTimeout(resolve, 6000); // 6초 주입 원칙 [cite: 2026-03-04]
+                setTimeout(resolve, 6000); // 6초 주입 [cite: 2026-03-04]
             });
         }
 
         function updateCooldownStatus() {
-            const storageKey = `tv_v58_${userInfo.name}_${userInfo.phone}`;
-            const stats = JSON.parse(localStorage.getItem(storageKey) || '{"sessions":0, "lastTime":0}');
+            const key = `stats_${userInfo.name}`;
+            const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
-            const cooldownPeriod = 10 * 60 * 1000;
+            const cooldown = 10 * 60 * 1000; // 10분 [cite: 2026-03-04]
 
-            if (diff < cooldownPeriod && stats.sessions > 0) {
-                document.getElementById('action-btn').disabled = true;
-                const remainSec = Math.ceil((cooldownPeriod - diff) / 1000);
-                document.getElementById('cooldown-info').innerText = `휴식 중: ${Math.floor(remainSec/60)}분 ${remainSec%60}초 남음`;
+            if (diff < cooldown && stats.sessions > 0) {
+                document.getElementById('action-btn').style.display = 'none';
+                document.getElementById('cooldown-area').style.display = 'block';
+                const rem = Math.ceil((cooldown - diff) / 1000);
+                document.getElementById('cooldown-info').innerText = `휴식 중: ${Math.floor(rem/60)}분 ${rem%60}초 남음`;
                 setTimeout(updateCooldownStatus, 1000);
             } else {
-                document.getElementById('action-btn').disabled = false;
-                document.getElementById('cooldown-info').innerText = "";
+                document.getElementById('cooldown-area').style.display = 'none';
+                if(document.getElementById('display-word').innerText === "준비하세요") {
+                    document.getElementById('action-btn').style.display = 'block';
+                }
             }
         }
     </script>
