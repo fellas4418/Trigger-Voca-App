@@ -11,30 +11,28 @@
         .view { display: none; background: white; padding: 35px 25px; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .view.active { display: block; }
         input { width: 100%; padding: 18px; margin: 12px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
-        .agree-label { display: flex; align-items: center; gap: 10px; margin: 20px 0; cursor: pointer; text-align: left; font-size: 0.9rem; color: #666; }
-        .agree-label input { width: 20px; height: 20px; margin: 0; }
-        button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; }
-        button:disabled { background: #ccc !important; }
-        .card { position: relative; padding: 60px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; }
+        .benefit-tag { background: #fff3e0; color: #ef6c00; font-size: 0.85rem; font-weight: bold; padding: 8px 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; }
+        .agree-label { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin: 25px 0; cursor: pointer; text-align: left; }
+        .agree-label input[type="checkbox"] { width: 22px; height: 22px; cursor: pointer; margin: 0; }
+        button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
+        .card { position: relative; padding: 60px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; min-height: 200px; display: flex; flex-direction: column; justify-content: center; }
         .word { font-size: 3.5rem; font-weight: 800; margin: 0; }
         .meaning { font-size: 1.8rem; color: #888; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
         .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
         #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; }
-        .nav-link { font-size: 0.8rem; color: #999; text-decoration: underline; cursor: pointer; margin-top: 20px; display: inline-block; }
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+        #pause-btn { background: #ff9800; } /* 일시중지 버튼 색상 [cite: 2026-03-05] */
     </style>
 </head>
 <body>
     <div id="app">
-        <div id="view-login" class="view">
-            <h3 style="margin-top:0;">학습자 인증</h3>
-            <p style="font-size:0.9rem; color:#888;">최초 1회만 입력하면 됩니다.</p>
-            <input type="text" id="user-name" placeholder="학생 성함 (필수)">
-            <input type="tel" id="user-phone" placeholder="전화번호 (선택사항)">
-            <label class="agree-label">
-                <input type="checkbox" id="user-agree">
-                <span>[필수] 서비스 이용 및 데이터 기록 동의</span>
-            </label>
-            <button onclick="saveAndGo()">등록 후 시작하기</button>
+        <div id="view-login" class="view active">
+            <span class="benefit-tag">🎁 POINT EVENT</span>
+            <h3 style="margin-top:0;">학습자 정보 입력</h3>
+            <input type="text" id="user-name" placeholder="성함 (필수)">
+            <input type="tel" id="user-phone" placeholder="전화번호 전체 (선택사항)">
+            <label class="agree-label"><input type="checkbox" id="user-agree"> <span>[필수] 서비스 이용 및 데이터 기록 동의</span></label>
+            <button onclick="handleLogin()">학습 시작하기</button>
         </div>
 
         <div id="view-mode" class="view">
@@ -44,123 +42,115 @@
                 <button onclick="selectCourse('middle')">중등 코스</button>
                 <button onclick="selectCourse('high')" style="background:#2196F3">고등 코스</button>
             </div>
-            <p class="nav-link" onclick="clearInfo()">정보 재설정</p>
         </div>
 
         <div id="view-study" class="view">
             <div class="card">
                 <div id="timer-bar"></div>
-                <p id="progress-text" style="color:#aaa; font-weight:bold;">준비하세요</p>
-                <h1 class="word" id="display-word">준비하세요</h1>
+                <h1 class="word" id="display-word">Trigger</h1>
                 <div id="meaning-container"></div>
             </div>
-            <button id="action-btn" onclick="startLearning()">지금 바로 시작</button>
-            <div id="cooldown-area" style="display:none; margin-top:20px;">
-                <p id="cooldown-info" style="color:#e53935; font-weight:bold; margin-bottom:15px;"></p>
-                <button onclick="changeView('view-mode')" style="background:#666;">메인 메뉴로</button>
+            <div id="study-controls">
+                <button id="action-btn" onclick="startLearning()">지금 바로 주입</button>
             </div>
+            <div id="pause-controls" style="display:none;" class="btn-group">
+                <button id="pause-btn" onclick="togglePause()">일시 중지</button>
+            </div>
+            <p id="cooldown-info" style="margin-top:15px; color:#e53935; font-weight:bold;"></p>
         </div>
     </div>
 
     <script>
         const wordLib = {
-            middle: [{word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"}, {word:"happen", meanings:["일어나다"], color:"#E8F5E9"}],
-            high: [{word:"analyze", meanings:["분석하다"], color:"#FFF3E0"}, {word:"assume", meanings:["가정하다"], color:"#FFF3E0"}]
+            middle: [
+                {word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"},
+                {word:"happen", meanings:["일어나다", "발생하다"], color:"#E8F5E9"}
+            ],
+            high: [ // 고등 단어 오류 수정 (일어나다 삭제) [cite: 2026-03-05]
+                {word:"analyze", meanings:["분석하다"], color:"#FFF3E0"},
+                {word:"acquire", meanings:["습득하다", "얻다"], color:"#FFF3E0"}
+            ]
         };
 
-        let userInfo = null;
-        let selectedMode = "";
+        let user = { name: "", phone: "" }, mode = "", isPaused = false, currentIdx = 0;
 
-        // 초기화 로직: 정보가 있으면 바로 메인으로 [cite: 2026-03-05]
-        window.onload = () => {
-            const saved = localStorage.getItem('tv_user_v6');
-            if (saved) {
-                userInfo = JSON.parse(saved);
-                document.getElementById('welcome-msg').innerText = `${userInfo.name}님,`;
-                changeView('view-mode');
-            } else {
-                changeView('view-login');
-            }
-        };
-
-        function changeView(id) {
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-            document.getElementById(id).classList.add('active');
+        function handleLogin() {
+            const n = document.getElementById('user-name').value.trim();
+            const a = document.getElementById('user-agree').checked;
+            if(!n || !a) return alert("필수 정보를 확인해주세요.");
+            user.name = n; user.phone = document.getElementById('user-phone').value.trim() || "0";
+            document.getElementById('welcome-msg').innerText = `${n}님,`;
+            showView('view-mode');
         }
 
-        function saveAndGo() {
-            const name = document.getElementById('user-name').value.trim();
-            const phone = document.getElementById('user-phone').value.trim();
-            if (!name || !document.getElementById('user-agree').checked) { alert("성함 입력과 동의가 필요합니다."); return; }
-            userInfo = { name, phone };
-            localStorage.setItem('tv_user_v6', JSON.stringify(userInfo));
-            document.getElementById('welcome-msg').innerText = `${name}님,`;
-            changeView('view-mode');
-        }
-
-        function clearInfo() { localStorage.removeItem('tv_user_v6'); location.reload(); }
-
-        function selectCourse(mode) {
-            selectedMode = mode;
-            changeView('view-study');
-            document.getElementById('display-word').innerText = "준비하세요";
-            document.getElementById('progress-text').innerText = "준비 완료";
-            document.getElementById('action-btn').style.display = 'block';
-            document.getElementById('cooldown-area').style.display = 'none';
-            updateCooldownStatus();
-        }
+        function selectCourse(m) { mode = m; showView('view-study'); updateStatus(); }
+        function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
 
         async function startLearning() {
-            document.getElementById('action-btn').style.display = 'none';
-            const words = wordLib[selectedMode];
-            for(let i=0; i < words.length; i++) {
-                await runInjection(words[i], i+1, words.length);
+            document.getElementById('study-controls').style.display = 'none';
+            document.getElementById('pause-controls').style.display = 'flex';
+            currentIdx = 0;
+            while(currentIdx < wordLib[mode].length) {
+                if(!isPaused) {
+                    await runInjection(wordLib[mode][currentIdx], currentIdx+1, wordLib[mode].length);
+                    currentIdx++;
+                } else {
+                    await new Promise(r => setTimeout(r, 100)); // 중지 중 대기 [cite: 2026-03-05]
+                }
             }
-            const key = `stats_${userInfo.name}`;
-            const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
-            stats.sessions += 1; stats.lastTime = Date.now();
-            localStorage.setItem(key, JSON.stringify(stats));
-            updateCooldownStatus();
+            finish();
+        }
+
+        function togglePause() {
+            isPaused = !isPaused;
+            const btn = document.getElementById('pause-btn');
+            btn.innerText = isPaused ? "다시 시작" : "일시 중지";
+            btn.style.background = isPaused ? "#4CAF50" : "#ff9800";
         }
 
         function runInjection(data, cur, total) {
             return new Promise(resolve => {
+                const bar = document.getElementById('timer-bar');
                 document.getElementById('display-word').innerText = data.word;
-                document.getElementById('progress-text').innerText = `${cur} / ${total}`;
                 document.body.style.backgroundColor = data.color;
                 const container = document.getElementById('meaning-container');
                 container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
-                const bar = document.getElementById('timer-bar');
-                bar.style.transition = 'none'; bar.style.width = '0%';
-                setTimeout(() => { bar.style.transition = 'width 6000ms linear'; bar.style.width = '100%'; }, 50);
-                const elements = document.querySelectorAll('.meaning');
-                elements.forEach((el, i) => {
-                    setTimeout(() => {
-                        elements.forEach(e => e.classList.remove('active'));
-                        el.classList.add('active');
-                    }, i * (6000 / data.meanings.length));
-                });
-                setTimeout(resolve, 6000); // 6초 주입 [cite: 2026-03-04]
+                
+                let elapsed = 0;
+                const interval = setInterval(() => {
+                    if(!isPaused) {
+                        elapsed += 100;
+                        const pct = (elapsed / 6000) * 100;
+                        bar.style.width = pct + '%';
+                        
+                        const elements = document.querySelectorAll('.meaning');
+                        const mIdx = Math.floor((elapsed / 6000) * data.meanings.length);
+                        elements.forEach((el, i) => el.classList.toggle('active', i === mIdx));
+
+                        if(elapsed >= 6000) { clearInterval(interval); resolve(); }
+                    }
+                }, 100);
             });
         }
 
-        function updateCooldownStatus() {
-            const key = `stats_${userInfo.name}`;
+        function finish() {
+            const key = `tv_v6_${user.name}_${user.phone}`;
+            const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
+            stats.sessions += 1; stats.lastTime = Date.now();
+            localStorage.setItem(key, JSON.stringify(stats));
+            alert("세션 완료! 10분간 휴식하세요."); [cite: 2026-03-05]
+            location.reload();
+        }
+
+        function updateStatus() {
+            const key = `tv_v6_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
-            const cooldown = 10 * 60 * 1000; // 10분 [cite: 2026-03-04]
-
-            if (diff < cooldown && stats.sessions > 0) {
-                document.getElementById('action-btn').style.display = 'none';
-                document.getElementById('cooldown-area').style.display = 'block';
-                const rem = Math.ceil((cooldown - diff) / 1000);
+            if(diff < 600000 && stats.sessions > 0) {
+                document.getElementById('action-btn').disabled = true;
+                const rem = Math.ceil((600000 - diff) / 1000);
                 document.getElementById('cooldown-info').innerText = `휴식 중: ${Math.floor(rem/60)}분 ${rem%60}초 남음`;
-                setTimeout(updateCooldownStatus, 1000);
-            } else {
-                document.getElementById('cooldown-area').style.display = 'none';
-                if(document.getElementById('display-word').innerText === "준비하세요") {
-                    document.getElementById('action-btn').style.display = 'block';
-                }
+                setTimeout(updateStatus, 1000);
             }
         }
     </script>
