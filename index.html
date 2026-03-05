@@ -3,31 +3,41 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v6.2</title>
+    <title>Trigger Voca v6.3</title>
     <style>
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; transition: background-color 0.5s; }
         #app { width: 90%; max-width: 400px; text-align: center; }
-        /* 앱 이름 상단 고정 */
+        
         .app-header { font-size: 0.9rem; font-weight: bold; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
         .view { display: none; background: white; padding: 35px 25px; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .view.active { display: block; }
+        
         input { width: 100%; padding: 18px; margin: 12px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
         .benefit-tag { background: #fff3e0; color: #ef6c00; font-size: 0.85rem; font-weight: bold; padding: 8px 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; }
+        
         .agree-container { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin: 25px 0; text-align: left; }
         .agree-container input { width: 22px; height: 22px; cursor: pointer; margin: 0; flex-shrink: 0; }
         .agree-container label { font-size: 0.9rem; color: #555; cursor: pointer; user-select: none; }
+        
         button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         button:disabled { background: #ccc; cursor: not-allowed; }
+        
+        /* 메인으로 가기 버튼 전용 스타일 */
+        .back-btn { background: transparent; color: #777; width: auto; padding: 0; margin-bottom: 15px; font-size: 1rem; text-align: left; display: inline-block; }
+        .back-btn:hover { color: #000; }
+
         .card { position: relative; padding: 60px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; min-height: 220px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
         .progress-text { position: absolute; top: 15px; right: 20px; font-size: 0.85rem; color: #bbb; font-weight: bold; }
         .word { font-size: 3.5rem; font-weight: 800; margin: 0; color: #1a1a1a; }
         .meaning { font-size: 1.8rem; color: #888; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
         .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
+        
         #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; transition: width 0.1s linear; }
         .ctrl-group { display: flex; gap: 10px; margin-top: 15px; }
         #pause-btn { background: #ff9800; }
-        #cooldown-display { display: none; background: #ffebee; color: #c62828; padding: 20px; border-radius: 15px; margin-top: 20px; font-weight: bold; }
+        
+        #cooldown-display { display: none; background: #e3f2fd; color: #1976d2; padding: 20px; border-radius: 15px; margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
@@ -50,13 +60,15 @@
             <h2 id="welcome-msg" style="margin-bottom:10px;"></h2>
             <p style="color:#666; margin-bottom:30px;">오늘의 단어 학습을 시작합니다.</p>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <button onclick="selectCourse('middle')">중등 코스</button>
-                <button onclick="selectCourse('high')" style="background:#2196F3">고등 코스</button>
+                <button class="course-btn" onclick="selectCourse('middle')">중등 코스</button>
+                <button class="course-btn" onclick="selectCourse('high')" style="background:#2196F3">고등 코스</button>
             </div>
             <div id="cooldown-display"></div>
         </div>
 
         <div id="view-study" class="view">
+            <button class="back-btn" onclick="goToMain()">← 메인으로 가기</button>
+            
             <div class="card">
                 <div id="timer-bar"></div>
                 <div id="word-progress" class="progress-text"></div>
@@ -85,8 +97,10 @@
         };
 
         let user = { name: "", phone: "" }, mode = "", isPaused = false, wordIdx = 0;
+        let isStudying = false; 
+        let currentWordTimer = null; 
+        let cooldownInterval = null; 
 
-        // 초기 실행 시 저장된 사용자 정보 확인
         window.onload = function() {
             const savedUser = localStorage.getItem('tv_user_info');
             if (savedUser) {
@@ -110,9 +124,29 @@
             }
             
             user = { name: n, phone: p || "unregistered" };
-            localStorage.setItem('tv_user_info', JSON.stringify(user)); // 정보 저장
+            localStorage.setItem('tv_user_info', JSON.stringify(user));
             document.getElementById('welcome-msg').innerText = `${n}님,`;
             showView('view-mode');
+            checkCooldown();
+        }
+
+        // 메인으로 강제 복귀 시 상태 초기화 로직
+        function goToMain() {
+            isStudying = false; 
+            isPaused = false;
+            if(currentWordTimer) clearInterval(currentWordTimer);
+            document.body.style.backgroundColor = 'var(--bg)';
+            
+            // 학습 UI 초기화
+            document.getElementById('pre-study-btn').style.display = 'block';
+            document.getElementById('pause-area').style.display = 'none';
+            document.getElementById('timer-bar').style.width = '0%';
+            document.getElementById('display-word').innerText = "준비해 주세요";
+            document.getElementById('word-progress').innerText = "";
+            document.getElementById('meaning-container').innerHTML = "";
+            
+            showView('view-mode');
+            checkCooldown();
         }
 
         function selectCourse(m) { 
@@ -120,7 +154,6 @@
             showView('view-study'); 
             document.getElementById('display-word').innerText = "준비해 주세요";
             document.getElementById('word-progress').innerText = "";
-            checkCooldown();
         }
 
         function showView(id) { 
@@ -129,22 +162,22 @@
         }
 
         async function startVoca() {
+            isStudying = true;
             document.getElementById('pre-study-btn').style.display = 'none';
             document.getElementById('pause-area').style.display = 'flex';
             wordIdx = 0;
             
             const words = wordLib[mode];
-            while(wordIdx < words.length) {
+            while(wordIdx < words.length && isStudying) {
                 if(!isPaused) {
-                    // 진행도 표시 (예: 1/10)
                     document.getElementById('word-progress').innerText = `${wordIdx + 1} / ${words.length}`;
                     await runCycle(words[wordIdx]);
-                    wordIdx++;
+                    if(isStudying) wordIdx++; 
                 } else {
                     await new Promise(r => setTimeout(r, 100));
                 }
             }
-            finish();
+            if(isStudying) finish(); 
         }
 
         function togglePause() {
@@ -167,7 +200,9 @@
                 const duration = 6000;
                 const interval = 100;
                 
-                const timer = setInterval(() => {
+                if(currentWordTimer) clearInterval(currentWordTimer);
+                
+                currentWordTimer = setInterval(() => {
                     if(!isPaused) {
                         ms += interval;
                         bar.style.width = (ms / duration * 100) + '%';
@@ -177,7 +212,7 @@
                         el.forEach((e, i) => e.classList.toggle('active', i === activeIdx));
                         
                         if(ms >= duration) { 
-                            clearInterval(timer); 
+                            clearInterval(currentWordTimer); 
                             resolve(); 
                         }
                     }
@@ -192,8 +227,7 @@
             stats.lastTime = Date.now();
             localStorage.setItem(key, JSON.stringify(stats));
             
-            showView('view-mode');
-            checkCooldown();
+            goToMain(); // 완료 후 상태를 깔끔하게 초기화하며 메인으로 이동
         }
 
         function checkCooldown() {
@@ -203,27 +237,31 @@
             const cooldownMs = 600000; // 10분
             
             const display = document.getElementById('cooldown-display');
-            const btns = document.querySelectorAll('#view-mode button');
+            const btns = document.querySelectorAll('.course-btn');
+            
+            if (cooldownInterval) clearInterval(cooldownInterval); // 기존 쿨타임 인터벌 완전 제거
             
             if(diff < cooldownMs && stats.sessions > 0) {
                 display.style.display = 'block';
                 btns.forEach(b => b.disabled = true);
                 
-                const updateTimer = setInterval(() => {
+                cooldownInterval = setInterval(() => {
                     const now = Date.now();
                     const remaining = cooldownMs - (now - stats.lastTime);
                     
                     if (remaining <= 0) {
-                        clearInterval(updateTimer);
+                        clearInterval(cooldownInterval);
                         display.style.display = 'none';
                         btns.forEach(b => b.disabled = false);
                     } else {
                         const m = Math.floor(remaining / 60000);
                         const s = Math.floor((remaining % 60000) / 1000);
-                        // 10분 카운트다운 표시
-                        display.innerText = `휴식 중: ${m}분 ${s}초 후 다시 학습 가능`;
+                        display.innerText = `⏳ 쿨타임: ${m}분 ${s}초 남음`;
                     }
                 }, 1000);
+            } else {
+                display.style.display = 'none';
+                btns.forEach(b => b.disabled = false);
             }
         }
     </script>
