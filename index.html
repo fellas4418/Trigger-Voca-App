@@ -3,11 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v6.1 - Fixed</title>
+    <title>Trigger Voca v6.2</title>
     <style>
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; transition: background-color 0.5s; }
         #app { width: 90%; max-width: 400px; text-align: center; }
+        /* 앱 이름 상단 고정 */
+        .app-header { font-size: 0.9rem; font-weight: bold; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
         .view { display: none; background: white; padding: 35px 25px; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .view.active { display: block; }
         input { width: 100%; padding: 18px; margin: 12px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
@@ -18,17 +20,21 @@
         button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         .card { position: relative; padding: 60px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; min-height: 220px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
+        .progress-text { position: absolute; top: 15px; right: 20px; font-size: 0.85rem; color: #bbb; font-weight: bold; }
         .word { font-size: 3.5rem; font-weight: 800; margin: 0; color: #1a1a1a; }
         .meaning { font-size: 1.8rem; color: #888; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
         .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
         #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; transition: width 0.1s linear; }
         .ctrl-group { display: flex; gap: 10px; margin-top: 15px; }
         #pause-btn { background: #ff9800; }
+        #cooldown-display { display: none; background: #ffebee; color: #c62828; padding: 20px; border-radius: 15px; margin-top: 20px; font-weight: bold; }
     </style>
 </head>
 <body>
     <div id="app">
-        <div id="view-login" class="view active">
+        <div class="app-header">Trigger Voca</div>
+        
+        <div id="view-login" class="view">
             <span class="benefit-tag">🎁 POINT EVENT</span>
             <h3 style="margin-top:0;">학습자 정보 입력</h3>
             <input type="text" id="user-name" placeholder="성함 (필수)">
@@ -47,21 +53,22 @@
                 <button onclick="selectCourse('middle')">중등 코스</button>
                 <button onclick="selectCourse('high')" style="background:#2196F3">고등 코스</button>
             </div>
+            <div id="cooldown-display"></div>
         </div>
 
         <div id="view-study" class="view">
             <div class="card">
                 <div id="timer-bar"></div>
-                <h1 class="word" id="display-word">Trigger</h1>
+                <div id="word-progress" class="progress-text"></div>
+                <h1 class="word" id="display-word">준비해 주세요</h1>
                 <div id="meaning-container"></div>
             </div>
             <div id="pre-study-btn">
-                <button id="action-btn" onclick="startVoca()">지금 바로 주입</button>
+                <button id="action-btn" onclick="startVoca()">지금 바로 시작</button>
             </div>
             <div id="pause-area" style="display:none;" class="ctrl-group">
                 <button id="pause-btn" onclick="togglePause()">일시 중지</button>
             </div>
-            <p id="cooldown-info" style="margin-top:15px; color:#e53935; font-weight:bold;"></p>
         </div>
     </div>
 
@@ -79,6 +86,19 @@
 
         let user = { name: "", phone: "" }, mode = "", isPaused = false, wordIdx = 0;
 
+        // 초기 실행 시 저장된 사용자 정보 확인
+        window.onload = function() {
+            const savedUser = localStorage.getItem('tv_user_info');
+            if (savedUser) {
+                user = JSON.parse(savedUser);
+                document.getElementById('welcome-msg').innerText = `${user.name}님,`;
+                showView('view-mode');
+                checkCooldown();
+            } else {
+                showView('view-login');
+            }
+        };
+
         function handleLogin() {
             const n = document.getElementById('user-name').value.trim();
             const p = document.getElementById('user-phone').value.trim();
@@ -89,8 +109,8 @@
                 return;
             }
             
-            user.name = n;
-            user.phone = p || "unregistered";
+            user = { name: n, phone: p || "unregistered" };
+            localStorage.setItem('tv_user_info', JSON.stringify(user)); // 정보 저장
             document.getElementById('welcome-msg').innerText = `${n}님,`;
             showView('view-mode');
         }
@@ -98,7 +118,9 @@
         function selectCourse(m) { 
             mode = m; 
             showView('view-study'); 
-            checkCooldown(); // 코스 선택 시 쿨다운 확인
+            document.getElementById('display-word').innerText = "준비해 주세요";
+            document.getElementById('word-progress').innerText = "";
+            checkCooldown();
         }
 
         function showView(id) { 
@@ -114,6 +136,8 @@
             const words = wordLib[mode];
             while(wordIdx < words.length) {
                 if(!isPaused) {
+                    // 진행도 표시 (예: 1/10)
+                    document.getElementById('word-progress').innerText = `${wordIdx + 1} / ${words.length}`;
                     await runCycle(words[wordIdx]);
                     wordIdx++;
                 } else {
@@ -140,7 +164,7 @@
                 container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
                 
                 let ms = 0;
-                const duration = 6000; // 6초
+                const duration = 6000;
                 const interval = 100;
                 
                 const timer = setInterval(() => {
@@ -162,33 +186,44 @@
         }
 
         function finish() {
-            const key = `tv_v61_${user.name}_${user.phone}`;
+            const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
             stats.sessions += 1; 
             stats.lastTime = Date.now();
             localStorage.setItem(key, JSON.stringify(stats));
             
-            alert("세션 완료! 10분간 휴식하세요.");
-            location.reload();
+            showView('view-mode');
+            checkCooldown();
         }
 
         function checkCooldown() {
-            const key = `tv_v61_${user.name}_${user.phone}`;
+            const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
             const cooldownMs = 600000; // 10분
             
-            const btn = document.getElementById('action-btn');
-            const info = document.getElementById('cooldown-info');
+            const display = document.getElementById('cooldown-display');
+            const btns = document.querySelectorAll('#view-mode button');
             
             if(diff < cooldownMs && stats.sessions > 0) {
-                if(btn) btn.disabled = true;
-                const rem = Math.ceil((cooldownMs - diff) / 1000);
-                info.innerText = `휴식 중: ${Math.floor(rem/60)}분 ${rem%60}초 남음`;
-                setTimeout(checkCooldown, 1000);
-            } else {
-                if(btn) btn.disabled = false;
-                info.innerText = "";
+                display.style.display = 'block';
+                btns.forEach(b => b.disabled = true);
+                
+                const updateTimer = setInterval(() => {
+                    const now = Date.now();
+                    const remaining = cooldownMs - (now - stats.lastTime);
+                    
+                    if (remaining <= 0) {
+                        clearInterval(updateTimer);
+                        display.style.display = 'none';
+                        btns.forEach(b => b.disabled = false);
+                    } else {
+                        const m = Math.floor(remaining / 60000);
+                        const s = Math.floor((remaining % 60000) / 1000);
+                        // 10분 카운트다운 표시
+                        display.innerText = `휴식 중: ${m}분 ${s}초 후 다시 학습 가능`;
+                    }
+                }, 1000);
             }
         }
     </script>
