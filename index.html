@@ -3,11 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v6.9</title>
+    <title>Trigger Voca v7.0</title>
     <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js" integrity="sha384-l+xbElFSnPZ2rOaPrU//2FF5B4LB8FiX5q4fXYTlfcG4PGpMkE1vcL7kNXI6Cci0" crossorigin="anonymous"></script>
     <style>
-        /* [cite: 2026-03-05] v6.4부터 지켜온 오리지널 UI 디자인 */
-        :root { --primary: #4CAF50; --bg: #f0f2f5; }
+        :root { --primary: #4CAF50; --bg: #f0f2f5; --error: #e53935; }
         body { font-family: sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; transition: background-color 0.5s; }
         #app { width: 90%; max-width: 400px; text-align: center; }
         .app-header { font-size: 0.9rem; font-weight: bold; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
@@ -17,19 +16,21 @@
         .benefit-tag { background: #fff3e0; color: #ef6c00; font-size: 0.85rem; font-weight: bold; padding: 8px 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; }
         .agree-container { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin: 25px 0; text-align: left; cursor: pointer; }
         .agree-container input { width: 22px; height: 22px; cursor: pointer; margin: 0; flex-shrink: 0; }
-        .agree-container label { font-size: 0.9rem; color: #555; cursor: pointer; user-select: none; }
         button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         .card { position: relative; padding: 60px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; min-height: 220px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
-        .progress-text { position: absolute; top: 15px; right: 20px; font-size: 0.85rem; color: #bbb; font-weight: bold; }
         .word { font-size: 3.5rem; font-weight: 800; margin: 0; color: #1a1a1a; }
         .meaning { font-size: 1.8rem; color: #888; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
         .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
         #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; transition: width 0.1s linear; }
-        #pause-btn { background: #ff9800; }
         #cooldown-display { display: none; background: #e3f2fd; color: #1976d2; padding: 15px; border-radius: 12px; margin-top: 20px; font-weight: bold; font-size: 1rem; }
         
-        /* [cite: 2026-03-04] 성적표 팝업 */
+        /* [cite: 2026-03-04] Step 4: 테스트 전용 스타일 */
+        .test-grid { display: grid; grid-template-columns: 1fr; gap: 10px; margin-top: 20px; }
+        .test-option { background: #f8f9fa; color: #333; border: 2px solid #eee; font-size: 1.1rem; padding: 15px; }
+        .test-option.correct { background: var(--primary); color: white; border-color: var(--primary); }
+        .test-option.wrong { background: var(--error); color: white; border-color: var(--error); }
+        
         #report-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
         .report-card { background: white; width: 85%; max-width: 350px; border-radius: 30px; padding: 30px; border: 5px solid #FFD700; text-align: center; }
         .report-stat { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 1.1rem; }
@@ -67,9 +68,10 @@
             <div style="text-align: left;"><button style="background:none; border:none; color:#666; cursor:pointer;" onclick="goToMain()">← 메인으로 가기</button></div>
             <div class="card">
                 <div id="timer-bar"></div>
-                <div id="word-progress" class="progress-text"></div>
+                <div id="word-progress" style="position:absolute; top:15px; right:20px; font-size:0.85rem; color:#bbb;"></div>
                 <h1 class="word" id="display-word">Trigger</h1>
                 <div id="meaning-container"></div>
+                <div id="test-options" class="test-grid" style="display:none;"></div>
             </div>
             <div id="pre-study-btn"><button onclick="startVoca()">지금 바로 시작</button></div>
             <div id="pause-area" style="display:none; gap:10px; margin-top:15px;">
@@ -83,7 +85,7 @@
             <p style="color:#888; font-size:0.9rem; margin-bottom:5px;">Trigger Voca Report</p>
             <h2 id="rep-name-title" style="margin-bottom:20px;"></h2>
             <div class="report-stat"><span>학습 코스</span><b id="rep-course"></b></div>
-            <div class="report-stat"><span>학습 단어</span><b id="rep-count"></b></div>
+            <div class="report-stat"><span>테스트 점수</span><b id="rep-score" style="color:var(--error);"></b></div>
             <div class="report-stat"><span>오늘의 세션</span><b id="rep-session"></b></div>
             <p style="margin-top:20px; font-weight:bold; color:var(--primary);">"상위 1% 어휘력에 도달했습니다!"</p>
             <button class="kakao-btn" onclick="shareToKakao()">💬 학부모님께 결과 전송</button>
@@ -92,17 +94,21 @@
     </div>
 
     <script>
-        // [cite: 2026-03-05] 대표님이 주신 JS 키 적용 완료
-        try {
-            Kakao.init('fbb1520306ffaad0a882e993109a801c'); 
-        } catch(e) { console.error("Kakao SDK Init Error:", e); }
+        // [cite: 2026-03-05] 카카오 SDK 초기화
+        try { Kakao.init('fbb1520306ffaad0a882e993109a801c'); } catch(e) {}
 
         const wordLib = {
-            middle: [{word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"}, {word:"happen", meanings:["일어나다", "발생하다"], color:"#E8F5E9"}],
-            high: [{word:"analyze", meanings:["분석하다"], color:"#FFF3E0"}, {word:"acquire", meanings:["습득하다", "얻다"], color:"#FFF3E0"}]
+            middle: [
+                {word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9", distractors:["사라지다", "공부하다", "달리다"]},
+                {word:"happen", meanings:["일어나다", "발생하다"], color:"#E8F5E9", distractors:["멈추다", "잠자다", "먹다"]}
+            ],
+            high: [
+                {word:"analyze", meanings:["분석하다"], color:"#FFF3E0", distractors:["결합하다", "무시하다", "창조하다"]},
+                {word:"acquire", meanings:["습득하다", "얻다"], color:"#FFF3E0", distractors:["버리다", "잃다", "판매하다"]}
+            ]
         };
 
-        let user = { name: "", phone: "" }, mode = "", isPaused = false, wordIdx = 0, isStudying = false, currentTimer = null, cooldownInterval = null;
+        let user = { name: "", phone: "" }, mode = "", isPaused = false, wordIdx = 0, isStudying = false, currentTimer = null, testScore = 0;
 
         window.onload = function() {
             const saved = localStorage.getItem('tv_user_info');
@@ -113,7 +119,7 @@
         function handleLogin() {
             const n = document.getElementById('user-name').value.trim();
             const a = document.getElementById('user-agree').checked;
-            if(!n || !a) return alert("성함 입력과 이용 동의가 필요합니다.");
+            if(!n || !a) return alert("필수 정보를 입력해주세요.");
             user = { name: n, phone: document.getElementById('user-phone').value.trim() || "unregistered" };
             localStorage.setItem('tv_user_info', JSON.stringify(user));
             document.getElementById('welcome-msg').innerText = `${n}님,`;
@@ -121,29 +127,26 @@
         }
 
         function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-        function goToMain() { isStudying = false; isPaused = false; if(currentTimer) clearInterval(currentTimer); document.body.style.backgroundColor = 'var(--bg)'; showView('view-mode'); checkCooldown(); }
-        function selectCourse(m) { mode = m; showView('view-study'); document.getElementById('display-word').innerText = "준비해 주세요"; document.getElementById('meaning-container').innerHTML = ""; document.getElementById('pre-study-btn').style.display = 'block'; document.getElementById('pause-area').style.display = 'none'; }
+        function goToMain() { isStudying = false; isPaused = false; if(currentTimer) clearInterval(currentTimer); location.reload(); }
+        function selectCourse(m) { mode = m; showView('view-study'); document.getElementById('display-word').innerText = "준비해 주세요"; document.getElementById('pre-study-btn').style.display = 'block'; }
 
         async function startVoca() {
-            isStudying = true; document.getElementById('pre-study-btn').style.display = 'none'; document.getElementById('pause-area').style.display = 'flex';
+            isStudying = true; document.getElementById('pre-study-btn').style.display = 'none';
+            document.getElementById('pause-area').style.display = 'flex';
             wordIdx = 0; const words = wordLib[mode];
+            
+            // Step 1~2: 6초 주입 엔진 [cite: 2026-03-04]
             while(wordIdx < words.length && isStudying) {
                 if(!isPaused) {
                     document.getElementById('word-progress').innerText = `${wordIdx + 1} / ${words.length}`;
-                    await runCycle(words[wordIdx]);
+                    await runInjectionCycle(words[wordIdx]);
                     if(isStudying) wordIdx++;
                 } else { await new Promise(r => setTimeout(r, 100)); }
             }
-            if(isStudying) finishStudy();
+            if(isStudying) startMasterTest(); // Step 4로 진입 [cite: 2026-03-04]
         }
 
-        function togglePause() {
-            isPaused = !isPaused; const b = document.getElementById('pause-btn');
-            b.innerText = isPaused ? "다시 시작" : "일시 중지";
-            b.style.background = isPaused ? "#4CAF50" : "#ff9800";
-        }
-
-        function runCycle(data) {
+        function runInjectionCycle(data) {
             return new Promise(resolve => {
                 const bar = document.getElementById('timer-bar');
                 document.getElementById('display-word').innerText = data.word;
@@ -163,6 +166,64 @@
             });
         }
 
+        // [cite: 2026-03-04] Step 4: 마스터 테스트 로직
+        async function startMasterTest() {
+            document.getElementById('pause-area').style.display = 'none';
+            document.getElementById('meaning-container').innerHTML = "";
+            document.getElementById('test-options').style.display = 'grid';
+            wordIdx = 0; testScore = 0;
+            const words = wordLib[mode];
+
+            for(let i=0; i<words.length; i++) {
+                document.getElementById('word-progress').innerText = `TEST: ${i+1} / ${words.length}`;
+                await runTestQuestion(words[i]);
+            }
+            finishStudy();
+        }
+
+        function runTestQuestion(data) {
+            return new Promise(resolve => {
+                document.getElementById('display-word').innerText = data.word;
+                const optionsDiv = document.getElementById('test-options');
+                const bar = document.getElementById('timer-bar');
+                
+                // 보기 섞기
+                const options = [...data.distractors, data.meanings[0]].sort(() => Math.random() - 0.5);
+                optionsDiv.innerHTML = options.map(opt => `<button class="test-option" onclick="handleAnswer(this, '${opt}', '${data.meanings[0]}', ${resolve})">${opt}</button>`).join('');
+
+                let ms = 0; if(currentTimer) clearInterval(currentTimer);
+                currentTimer = setInterval(() => {
+                    ms += 100; bar.style.width = (100 - (ms / 3000 * 100)) + '%'; // 3초 제한 [cite: 2026-03-04]
+                    if(ms >= 3000) { 
+                        clearInterval(currentTimer); 
+                        handleAnswer(null, '', data.meanings[0], resolve); // 시간 초과
+                    }
+                }, 100);
+            });
+        }
+
+        function handleAnswer(btn, selected, correct, resolve) {
+            clearInterval(currentTimer);
+            const options = document.querySelectorAll('.test-option');
+            options.forEach(opt => opt.disabled = true);
+
+            if(selected === correct) {
+                if(btn) btn.classList.add('correct');
+                testScore++;
+            } else {
+                if(btn) btn.classList.add('wrong');
+                options.forEach(opt => { if(opt.innerText === correct) opt.classList.add('correct'); });
+            }
+
+            setTimeout(resolve, 1000); // 1초 후 다음 문제
+        }
+
+        function togglePause() {
+            isPaused = !isPaused; const b = document.getElementById('pause-btn');
+            b.innerText = isPaused ? "다시 시작" : "일시 중지";
+            b.style.background = isPaused ? "#4CAF50" : "#ff9800";
+        }
+
         function finishStudy() {
             const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
@@ -171,30 +232,18 @@
 
             document.getElementById('rep-name-title').innerText = `${user.name}님,`;
             document.getElementById('rep-course').innerText = mode === 'middle' ? '중등 코스' : '고등 코스';
-            document.getElementById('rep-count').innerText = wordLib[mode].length + "개 완수";
+            document.getElementById('rep-score').innerText = `${testScore} / ${wordLib[mode].length} 점`;
             document.getElementById('rep-session').innerText = stats.sessions + "회차";
             document.getElementById('report-overlay').style.display = 'flex';
         }
 
-        // [cite: 2026-03-05] 카카오 공식 공유 로직 (v6.9 최종)
         function shareToKakao() {
             const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key));
-            const shareText = `[트리거보카] ${user.name} 학생의 훈련 리포트\n\n오늘의 훈련 결과:\n- 코스: ${mode === 'middle' ? '중등' : '고등'}\n- 학습량: ${wordLib[mode].length}단어 완수\n- 누적 세션: ${stats.sessions}회\n\n상위 1% 어휘력을 향해 오늘도 성공적으로 훈련을 마쳤습니다!`;
-
+            const shareText = `[트리거보카] ${user.name} 학생 훈련 리포트\n\n- 코스: ${mode === 'middle' ? '중등' : '고등'}\n- 테스트 점수: ${testScore}/${wordLib[mode].length}\n- 오늘 누적 세션: ${stats.sessions}회\n\n상위 1% 어휘력을 향해 훈련을 완료했습니다!`;
             if (Kakao.isInitialized()) {
-                Kakao.Share.sendDefault({
-                    objectType: 'text',
-                    text: shareText,
-                    link: { mobileWebUrl: window.location.href, webUrl: window.location.href },
-                });
-            } else {
-                // 대비용 클립보드 복사 로직 [cite: 2026-03-05]
-                const t = document.createElement('textarea');
-                t.value = shareText; document.body.appendChild(t); t.select();
-                document.execCommand('copy'); document.body.removeChild(t);
-                alert("결과가 복사되었습니다! 카톡창에 붙여넣어 학부모님께 전송해주세요.");
-            }
+                Kakao.Share.sendDefault({ objectType: 'text', text: shareText, link: { mobileWebUrl: window.location.href, webUrl: window.location.href } });
+            } else { alert("결과가 복사되었습니다! 카톡에 붙여넣어 전송해주세요."); }
         }
 
         function checkCooldown() {
@@ -204,21 +253,19 @@
             const cooldownMs = 600000;
             const display = document.getElementById('cooldown-display');
             const btns = document.querySelectorAll('.course-btn');
-            if (cooldownInterval) clearInterval(cooldownInterval);
-            if(diff < cooldownMs && stats.sessions > 0) {
+            if (diff < cooldownMs && stats.sessions > 0) {
                 display.style.display = 'block'; btns.forEach(b => b.disabled = true);
                 document.getElementById('reset-btn').style.display = 'inline-block';
-                cooldownInterval = setInterval(() => {
+                setInterval(() => {
                     const rem = cooldownMs - (Date.now() - stats.lastTime);
-                    if (rem <= 0) { clearInterval(cooldownInterval); location.reload(); }
+                    if (rem <= 0) location.reload();
                     else {
                         const m = Math.floor(rem / 60000); const s = Math.floor((rem % 60000) / 1000);
                         display.innerText = `⏳ 쿨타임: ${m}분 ${s}초 남음`;
                     }
                 }, 1000);
-            } else { display.style.display = 'none'; btns.forEach(b => b.disabled = false); }
+            }
         }
-
         function resetCooldown() { localStorage.removeItem(`tv_stats_${user.name}_${user.phone}`); location.reload(); }
     </script>
 </body>
