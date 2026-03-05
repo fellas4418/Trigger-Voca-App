@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v6.3</title>
+    <title>Trigger Voca v6.4</title>
     <style>
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; transition: background-color 0.5s; }
@@ -23,9 +23,9 @@
         button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         button:disabled { background: #ccc; cursor: not-allowed; }
         
-        /* 메인으로 가기 버튼 전용 스타일 */
-        .back-btn { background: transparent; color: #777; width: auto; padding: 0; margin-bottom: 15px; font-size: 1rem; text-align: left; display: inline-block; }
-        .back-btn:hover { color: #000; }
+        /* 메인으로 가기 텍스트 버튼 스타일 */
+        .text-btn { background: transparent; color: #666; width: auto; padding: 5px 10px; margin-bottom: 15px; font-size: 1rem; text-align: left; display: inline-block; }
+        .text-btn:hover { color: #000; background: #f0f0f0; }
 
         .card { position: relative; padding: 60px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; min-height: 220px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
         .progress-text { position: absolute; top: 15px; right: 20px; font-size: 0.85rem; color: #bbb; font-weight: bold; }
@@ -37,7 +37,8 @@
         .ctrl-group { display: flex; gap: 10px; margin-top: 15px; }
         #pause-btn { background: #ff9800; }
         
-        #cooldown-display { display: none; background: #e3f2fd; color: #1976d2; padding: 20px; border-radius: 15px; margin-top: 20px; font-weight: bold; }
+        /* 쿨타임 표시 영역 스타일 (올려주신 스크린샷과 유사하게) */
+        #cooldown-display { display: none; background: #e3f2fd; color: #1976d2; padding: 15px; border-radius: 12px; margin-top: 20px; font-weight: bold; font-size: 1rem; }
     </style>
 </head>
 <body>
@@ -60,14 +61,19 @@
             <h2 id="welcome-msg" style="margin-bottom:10px;"></h2>
             <p style="color:#666; margin-bottom:30px;">오늘의 단어 학습을 시작합니다.</p>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
-                <button class="course-btn" onclick="selectCourse('middle')">중등 코스</button>
-                <button class="course-btn" onclick="selectCourse('high')" style="background:#2196F3">고등 코스</button>
+                <button class="course-btn" onclick="selectCourse('middle')" style="background:#bdbdbd;">중등 코스</button>
+                <button class="course-btn" onclick="selectCourse('high')" style="background:#2196F3;">고등 코스</button>
             </div>
+            
             <div id="cooldown-display"></div>
+            
+            <button id="reset-btn" onclick="resetCooldown()" style="display:none; background:transparent; color:#999; font-size:0.8rem; padding:10px; margin-top:10px; text-decoration:underline;">(테스트용) 쿨타임 리셋하기</button>
         </div>
 
         <div id="view-study" class="view">
-            <button class="back-btn" onclick="goToMain()">← 메인으로 가기</button>
+            <div style="text-align: left;">
+                <button class="text-btn" onclick="goToMain()">← 메인으로 가기</button>
+            </div>
             
             <div class="card">
                 <div id="timer-bar"></div>
@@ -118,10 +124,7 @@
             const p = document.getElementById('user-phone').value.trim();
             const a = document.getElementById('user-agree').checked;
             
-            if(!n || !a) {
-                alert("성함 입력과 이용 동의가 필요합니다.");
-                return;
-            }
+            if(!n || !a) return alert("성함 입력과 이용 동의가 필요합니다.");
             
             user = { name: n, phone: p || "unregistered" };
             localStorage.setItem('tv_user_info', JSON.stringify(user));
@@ -130,20 +133,16 @@
             checkCooldown();
         }
 
-        // 메인으로 강제 복귀 시 상태 초기화 로직
+        // 메인으로 가기 버튼 클릭 시 실행되는 함수
         function goToMain() {
             isStudying = false; 
             isPaused = false;
             if(currentWordTimer) clearInterval(currentWordTimer);
-            document.body.style.backgroundColor = 'var(--bg)';
+            document.body.style.backgroundColor = 'var(--bg)'; // 배경색 원상복구
             
-            // 학습 UI 초기화
             document.getElementById('pre-study-btn').style.display = 'block';
             document.getElementById('pause-area').style.display = 'none';
             document.getElementById('timer-bar').style.width = '0%';
-            document.getElementById('display-word').innerText = "준비해 주세요";
-            document.getElementById('word-progress').innerText = "";
-            document.getElementById('meaning-container').innerHTML = "";
             
             showView('view-mode');
             checkCooldown();
@@ -154,6 +153,9 @@
             showView('view-study'); 
             document.getElementById('display-word').innerText = "준비해 주세요";
             document.getElementById('word-progress').innerText = "";
+            document.getElementById('meaning-container').innerHTML = "";
+            document.getElementById('pre-study-btn').style.display = 'block';
+            document.getElementById('pause-area').style.display = 'none';
         }
 
         function showView(id) { 
@@ -227,22 +229,25 @@
             stats.lastTime = Date.now();
             localStorage.setItem(key, JSON.stringify(stats));
             
-            goToMain(); // 완료 후 상태를 깔끔하게 초기화하며 메인으로 이동
+            goToMain(); 
         }
 
+        // 메인 화면 쿨타임 표시 로직
         function checkCooldown() {
             const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
-            const cooldownMs = 10000; // 10분
+            const cooldownMs = 600000; // 10분 (밀리초)
             
             const display = document.getElementById('cooldown-display');
+            const resetBtn = document.getElementById('reset-btn');
             const btns = document.querySelectorAll('.course-btn');
             
-            if (cooldownInterval) clearInterval(cooldownInterval); // 기존 쿨타임 인터벌 완전 제거
+            if (cooldownInterval) clearInterval(cooldownInterval); 
             
             if(diff < cooldownMs && stats.sessions > 0) {
                 display.style.display = 'block';
+                resetBtn.style.display = 'inline-block'; // 대기 중일 때만 리셋 버튼 표시
                 btns.forEach(b => b.disabled = true);
                 
                 cooldownInterval = setInterval(() => {
@@ -252,6 +257,7 @@
                     if (remaining <= 0) {
                         clearInterval(cooldownInterval);
                         display.style.display = 'none';
+                        resetBtn.style.display = 'none';
                         btns.forEach(b => b.disabled = false);
                     } else {
                         const m = Math.floor(remaining / 60000);
@@ -261,8 +267,17 @@
                 }, 1000);
             } else {
                 display.style.display = 'none';
+                resetBtn.style.display = 'none';
                 btns.forEach(b => b.disabled = false);
             }
+        }
+
+        // 테스트용: 10분 쿨타임을 강제로 지워주는 함수
+        function resetCooldown() {
+            const key = `tv_stats_${user.name}_${user.phone}`;
+            localStorage.removeItem(key);
+            checkCooldown();
+            alert("쿨타임이 초기화되었습니다. 바로 학습이 가능합니다.");
         }
     </script>
 </body>
