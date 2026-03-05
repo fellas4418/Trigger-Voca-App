@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v6.6</title>
+    <title>Trigger Voca v6.7</title>
     <style>
-        /* v6.4 오리지널 UI 디자인 완벽 보존 [cite: 2026-03-05] */
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; transition: background-color 0.5s; }
         #app { width: 90%; max-width: 400px; text-align: center; }
@@ -17,7 +16,8 @@
         input { width: 100%; padding: 18px; margin: 12px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
         .benefit-tag { background: #fff3e0; color: #ef6c00; font-size: 0.85rem; font-weight: bold; padding: 8px 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; }
         
-        .agree-container { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin: 25px 0; text-align: left; }
+        /* 체크박스 영역 수정 */
+        .agree-container { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin: 25px 0; text-align: left; cursor: pointer; }
         .agree-container input { width: 22px; height: 22px; cursor: pointer; margin: 0; flex-shrink: 0; }
         .agree-container label { font-size: 0.9rem; color: #555; cursor: pointer; user-select: none; }
         
@@ -25,7 +25,6 @@
         button:disabled { background: #ccc; cursor: not-allowed; }
         
         .text-btn { background: transparent; color: #666; width: auto; padding: 5px 10px; margin-bottom: 15px; font-size: 1rem; text-align: left; display: inline-block; border: none; cursor: pointer; }
-        .text-btn:hover { color: #000; background: #f0f0f0; border-radius: 5px; }
 
         .card { position: relative; padding: 60px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; min-height: 220px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
         .progress-text { position: absolute; top: 15px; right: 20px; font-size: 0.85rem; color: #bbb; font-weight: bold; }
@@ -39,12 +38,11 @@
         
         #cooldown-display { display: none; background: #e3f2fd; color: #1976d2; padding: 15px; border-radius: 12px; margin-top: 20px; font-weight: bold; font-size: 1rem; }
 
-        /* Step 5: 성적표 팝업 UI 추가 [cite: 2026-03-04] */
-        #report-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 9999; align-items: center; justify-content: center; }
+        /* 성적표 팝업 [cite: 2026-03-04] */
+        #report-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
         .report-card { background: white; width: 85%; max-width: 350px; border-radius: 30px; padding: 30px; border: 5px solid #FFD700; text-align: center; }
-        .report-title { font-size: 1.5rem; margin-bottom: 15px; color: #333; }
         .stat-line { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 1.1rem; }
-        .kakao-btn { background: #FEE500; color: #3C1E1E; margin-top: 25px; border-radius: 15px; }
+        .kakao-btn { background: #FEE500; color: #3C1E1E; margin-top: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
     </style>
 </head>
 <body>
@@ -55,9 +53,9 @@
             <span class="benefit-tag">🎁 POINT EVENT</span>
             <h3 style="margin-top:0;">학습자 정보 입력</h3>
             <input type="text" id="user-name" placeholder="성함 (필수)">
-            <input type="tel" id="user-phone" placeholder="전화번호 (예: 010-0000-0000)">
-            <div class="agree-container">
-                <input type="checkbox" id="user-agree">
+            <input type="tel" id="user-phone" placeholder="전화번호 전체 (선택)">
+            <div class="agree-container" onclick="document.getElementById('user-agree').click()">
+                <input type="checkbox" id="user-agree" onclick="event.stopPropagation()">
                 <label for="user-agree">[필수] 서비스 이용 및 데이터 기록 동의</label>
             </div>
             <button onclick="handleLogin()">학습 시작하기</button>
@@ -71,7 +69,7 @@
                 <button class="course-btn" onclick="selectCourse('high')" style="background:#2196F3;">고등 코스</button>
             </div>
             <div id="cooldown-display"></div>
-            <button id="reset-btn" onclick="resetCooldown()" style="display:none; background:transparent; color:#999; font-size:0.8rem; padding:10px; margin-top:10px; text-decoration:underline; border:none; cursor:pointer;">(테스트용) 쿨타임 리셋하기</button>
+            <button id="reset-btn" onclick="resetCooldown()" style="display:none; background:transparent; color:#999; font-size:0.8rem; margin-top:15px; text-decoration:underline; border:none; cursor:pointer;">(테스트용) 리셋</button>
         </div>
 
         <div id="view-study" class="view">
@@ -79,7 +77,7 @@
             <div class="card">
                 <div id="timer-bar"></div>
                 <div id="word-progress" class="progress-text"></div>
-                <h1 class="word" id="display-word">준비해 주세요</h1>
+                <h1 class="word" id="display-word">Trigger</h1>
                 <div id="meaning-container"></div>
             </div>
             <div id="pre-study-btn"><button id="action-btn" onclick="startVoca()">지금 바로 시작</button></div>
@@ -92,13 +90,13 @@
     <div id="report-overlay">
         <div class="report-card">
             <p style="color:#888; font-size:0.9rem; margin-bottom:5px;">Trigger Voca Report</p>
-            <h2 class="report-title" id="rep-name-title"></h2>
+            <h2 id="rep-name-title" style="margin-bottom:20px;"></h2>
             <div class="stat-line"><span>학습 코스</span><b id="rep-course"></b></div>
             <div class="stat-line"><span>학습 단어</span><b id="rep-count"></b></div>
             <div class="stat-line"><span>오늘의 세션</span><b id="rep-session"></b></div>
             <p style="margin-top:20px; font-weight:bold; color:var(--primary);">"상위 1% 어휘력에 도달했습니다!"</p>
             <button class="kakao-btn" onclick="shareToKakao()">학부모님께 결과 전송</button>
-            <p onclick="location.reload()" style="margin-top:15px; color:#aaa; cursor:pointer; font-size:0.8rem; text-decoration:underline;">닫기</p>
+            <p onclick="location.reload()" style="margin-top:20px; color:#aaa; cursor:pointer; font-size:0.8rem; text-decoration:underline;">닫기</p>
         </div>
     </div>
 
@@ -112,49 +110,23 @@
 
         window.onload = function() {
             const savedUser = localStorage.getItem('tv_user_info');
-            if (savedUser) {
-                user = JSON.parse(savedUser);
-                document.getElementById('welcome-msg').innerText = `${user.name}님,`;
-                showView('view-mode');
-                checkCooldown();
-            } else { showView('view-login'); }
+            if (savedUser) { user = JSON.parse(savedUser); document.getElementById('welcome-msg').innerText = `${user.name}님,`; showView('view-mode'); checkCooldown(); }
+            else { showView('view-login'); }
         };
 
         function handleLogin() {
             const n = document.getElementById('user-name').value.trim();
-            const p = document.getElementById('user-phone').value.trim();
             const a = document.getElementById('user-agree').checked;
             if(!n || !a) return alert("성함 입력과 이용 동의가 필요합니다.");
-            user = { name: n, phone: p || "unregistered" };
+            user = { name: n, phone: document.getElementById('user-phone').value.trim() || "unregistered" };
             localStorage.setItem('tv_user_info', JSON.stringify(user));
             document.getElementById('welcome-msg').innerText = `${n}님,`;
-            showView('view-mode');
-            checkCooldown();
+            showView('view-mode'); checkCooldown();
         }
 
-        function goToMain() {
-            isStudying = false; isPaused = false;
-            if(currentWordTimer) clearInterval(currentWordTimer);
-            document.body.style.backgroundColor = 'var(--bg)';
-            document.getElementById('pre-study-btn').style.display = 'block';
-            document.getElementById('pause-area').style.display = 'none';
-            document.getElementById('timer-bar').style.width = '0%';
-            showView('view-mode');
-            checkCooldown();
-        }
-
-        function selectCourse(m) { 
-            mode = m; showView('view-study'); 
-            document.getElementById('display-word').innerText = "준비해 주세요";
-            document.getElementById('meaning-container').innerHTML = "";
-            document.getElementById('pre-study-btn').style.display = 'block';
-            document.getElementById('pause-area').style.display = 'none';
-        }
-
-        function showView(id) { 
-            document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); 
-            document.getElementById(id).classList.add('active'); 
-        }
+        function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+        function goToMain() { isStudying = false; isPaused = false; if(currentWordTimer) clearInterval(currentWordTimer); document.body.style.backgroundColor = 'var(--bg)'; showView('view-mode'); checkCooldown(); }
+        function selectCourse(m) { mode = m; showView('view-study'); document.getElementById('display-word').innerText = "준비해 주세요"; document.getElementById('meaning-container').innerHTML = ""; document.getElementById('pre-study-btn').style.display = 'block'; document.getElementById('pause-area').style.display = 'none'; }
 
         async function startVoca() {
             isStudying = true; document.getElementById('pre-study-btn').style.display = 'none'; document.getElementById('pause-area').style.display = 'flex';
@@ -163,10 +135,10 @@
                 if(!isPaused) {
                     document.getElementById('word-progress').innerText = `${wordIdx + 1} / ${words.length}`;
                     await runCycle(words[wordIdx]);
-                    if(isStudying) wordIdx++; 
+                    if(isStudying) wordIdx++;
                 } else { await new Promise(r => setTimeout(r, 100)); }
             }
-            if(isStudying) finishStudy(); 
+            if(isStudying) finishStudy();
         }
 
         function togglePause() {
@@ -182,17 +154,17 @@
                 document.body.style.backgroundColor = data.color;
                 const container = document.getElementById('meaning-container');
                 container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
-                let ms = 0; const duration = 6000; const interval = 100;
+                let ms = 0; const duration = 6000;
                 if(currentWordTimer) clearInterval(currentWordTimer);
                 currentWordTimer = setInterval(() => {
                     if(!isPaused) {
-                        ms += interval; bar.style.width = (ms / duration * 100) + '%';
+                        ms += 100; bar.style.width = (ms / duration * 100) + '%';
                         const el = document.querySelectorAll('.meaning');
                         const activeIdx = Math.floor((ms / duration) * data.meanings.length);
                         el.forEach((e, i) => e.classList.toggle('active', i === activeIdx));
                         if(ms >= duration) { clearInterval(currentWordTimer); resolve(); }
                     }
-                }, interval);
+                }, 100);
             });
         }
 
@@ -202,48 +174,58 @@
             stats.sessions += 1; stats.lastTime = Date.now();
             localStorage.setItem(key, JSON.stringify(stats));
 
-            // 성적표 팝업 노출 [cite: 2026-03-04]
             document.getElementById('rep-name-title').innerText = `${user.name}님,`;
             document.getElementById('rep-course').innerText = mode === 'middle' ? '중등 코스' : '고등 코스';
-            document.getElementById('rep-count').innerText = wordLib[mode].length + "개 완료";
+            document.getElementById('rep-count').innerText = wordLib[mode].length + "개 완수";
             document.getElementById('rep-session').innerText = stats.sessions + "회차";
             document.getElementById('report-overlay').style.display = 'flex';
         }
 
+        // [cite: 2026-03-05] image_93d7de.png 에러 방지용 2중 전송 로직
         function shareToKakao() {
             const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key));
-            const msg = `[트리거보카] ${user.name} 학생 학습 결과\n- 코스: ${mode === 'middle' ? '중등' : '고등'}\n- 학습량: ${wordLib[mode].length}단어 완수\n- 누적 세션: ${stats.sessions}회\n\n훈련을 성공적으로 마쳤습니다!`;
-            if (navigator.share) { navigator.share({ title: '학습 결과', text: msg }).catch(() => {}); }
-            else { alert("결과가 복사되었습니다. 학부모님께 붙여넣어 전송해주세요!\n\n" + msg); }
+            const msg = `[트리거보카] ${user.name} 학생 결과\n- 코스: ${mode === 'middle' ? '중등' : '고등'}\n- 학습량: ${wordLib[mode].length}단어 완수\n- 누적 세션: ${stats.sessions}회\n\n상위 1% 어휘력을 향해 오늘도 한 걸음!`;
+            
+            // 1순위: 클립보드 복사 (무조건 작동)
+            const el = document.createElement('textarea');
+            el.value = msg; document.body.appendChild(el);
+            el.select(); document.execCommand('copy');
+            document.body.removeChild(el);
+
+            // 2순위: 시스템 공유 시도 (실패 시 에러창 안 띄우고 무시)
+            if (navigator.share) {
+                navigator.share({ title: '학습 리포트', text: msg }).catch(() => {
+                    alert("결과가 복사되었습니다! 카톡에 붙여넣어 전송해주세요.");
+                });
+            } else {
+                alert("결과가 복사되었습니다! 카톡에 붙여넣어 전송해주세요.");
+            }
         }
 
         function checkCooldown() {
             const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
             const diff = Date.now() - stats.lastTime;
-            const cooldownMs = 600000; // 명세서 Step 3: 10분 강제 쿨타임 [cite: 2026-03-04]
+            const cooldownMs = 600000;
             const display = document.getElementById('cooldown-display');
             const btns = document.querySelectorAll('.course-btn');
-            if (cooldownInterval) clearInterval(cooldownInterval); 
+            if (cooldownInterval) clearInterval(cooldownInterval);
             if(diff < cooldownMs && stats.sessions > 0) {
                 display.style.display = 'block'; btns.forEach(b => b.disabled = true);
                 document.getElementById('reset-btn').style.display = 'inline-block';
                 cooldownInterval = setInterval(() => {
-                    const remaining = cooldownMs - (Date.now() - stats.lastTime);
-                    if (remaining <= 0) { clearInterval(cooldownInterval); location.reload(); }
+                    const rem = cooldownMs - (Date.now() - stats.lastTime);
+                    if (rem <= 0) { clearInterval(cooldownInterval); location.reload(); }
                     else {
-                        const m = Math.floor(remaining / 60000); const s = Math.floor((remaining % 60000) / 1000);
+                        const m = Math.floor(rem / 60000); const s = Math.floor((rem % 60000) / 1000);
                         display.innerText = `⏳ 쿨타임: ${m}분 ${s}초 남음`;
                     }
                 }, 1000);
             } else { display.style.display = 'none'; btns.forEach(b => b.disabled = false); }
         }
 
-        function resetCooldown() {
-            const key = `tv_stats_${user.name}_${user.phone}`;
-            localStorage.removeItem(key); location.reload();
-        }
+        function resetCooldown() { localStorage.removeItem(`tv_stats_${user.name}_${user.phone}`); location.reload(); }
     </script>
 </body>
 </html>
