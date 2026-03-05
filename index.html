@@ -3,46 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Trigger Voca v6.7</title>
+    <title>Trigger Voca v6.9</title>
+    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.0/kakao.min.js" integrity="sha384-l+xbElFSnPZ2rOaPrU//2FF5B4LB8FiX5q4fXYTlfcG4PGpMkE1vcL7kNXI6Cci0" crossorigin="anonymous"></script>
     <style>
+        /* [cite: 2026-03-05] v6.4부터 지켜온 오리지널 UI 디자인 */
         :root { --primary: #4CAF50; --bg: #f0f2f5; }
         body { font-family: sans-serif; background: var(--bg); display: flex; align-items: center; justify-content: center; min-height: 100vh; margin: 0; transition: background-color 0.5s; }
         #app { width: 90%; max-width: 400px; text-align: center; }
-        
         .app-header { font-size: 0.9rem; font-weight: bold; color: #888; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 1px; }
         .view { display: none; background: white; padding: 35px 25px; border-radius: 30px; box-shadow: 0 15px 40px rgba(0,0,0,0.1); }
         .view.active { display: block; }
-        
         input { width: 100%; padding: 18px; margin: 12px 0; border: 1px solid #ddd; border-radius: 12px; box-sizing: border-box; font-size: 1rem; }
         .benefit-tag { background: #fff3e0; color: #ef6c00; font-size: 0.85rem; font-weight: bold; padding: 8px 15px; border-radius: 8px; display: inline-block; margin-bottom: 20px; }
-        
-        /* 체크박스 영역 수정 */
         .agree-container { display: flex; align-items: center; justify-content: flex-start; gap: 12px; margin: 25px 0; text-align: left; cursor: pointer; }
         .agree-container input { width: 22px; height: 22px; cursor: pointer; margin: 0; flex-shrink: 0; }
         .agree-container label { font-size: 0.9rem; color: #555; cursor: pointer; user-select: none; }
-        
         button { background: var(--primary); color: white; border: none; padding: 20px; border-radius: 15px; font-size: 1.2rem; font-weight: bold; cursor: pointer; width: 100%; transition: 0.2s; }
         button:disabled { background: #ccc; cursor: not-allowed; }
-        
-        .text-btn { background: transparent; color: #666; width: auto; padding: 5px 10px; margin-bottom: 15px; font-size: 1rem; text-align: left; display: inline-block; border: none; cursor: pointer; }
-
         .card { position: relative; padding: 60px 10px; border: 1px solid #f0f0f0; border-radius: 24px; margin: 20px 0; background: #fff; min-height: 220px; display: flex; flex-direction: column; justify-content: center; overflow: hidden; }
         .progress-text { position: absolute; top: 15px; right: 20px; font-size: 0.85rem; color: #bbb; font-weight: bold; }
         .word { font-size: 3.5rem; font-weight: 800; margin: 0; color: #1a1a1a; }
         .meaning { font-size: 1.8rem; color: #888; opacity: 0.1; transition: 0.4s; margin: 15px 0; }
         .meaning.active { opacity: 1; color: #000; font-weight: 700; transform: scale(1.1); }
-        
         #timer-bar { position: absolute; top: 0; left: 0; height: 6px; background: var(--primary); width: 0%; transition: width 0.1s linear; }
-        .ctrl-group { display: flex; gap: 10px; margin-top: 15px; }
         #pause-btn { background: #ff9800; }
-        
         #cooldown-display { display: none; background: #e3f2fd; color: #1976d2; padding: 15px; border-radius: 12px; margin-top: 20px; font-weight: bold; font-size: 1rem; }
-
-        /* 성적표 팝업 [cite: 2026-03-04] */
+        
+        /* [cite: 2026-03-04] 성적표 팝업 */
         #report-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
         .report-card { background: white; width: 85%; max-width: 350px; border-radius: 30px; padding: 30px; border: 5px solid #FFD700; text-align: center; }
-        .stat-line { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 1.1rem; }
-        .kakao-btn { background: #FEE500; color: #3C1E1E; margin-top: 25px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .report-stat { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #eee; font-size: 1.1rem; }
+        .kakao-btn { background: #FEE500; color: #3C1E1E; margin-top: 25px; border-radius: 15px; display: flex; align-items: center; justify-content: center; gap: 10px; }
     </style>
 </head>
 <body>
@@ -73,15 +64,15 @@
         </div>
 
         <div id="view-study" class="view">
-            <div style="text-align: left;"><button class="text-btn" onclick="goToMain()">← 메인으로 가기</button></div>
+            <div style="text-align: left;"><button style="background:none; border:none; color:#666; cursor:pointer;" onclick="goToMain()">← 메인으로 가기</button></div>
             <div class="card">
                 <div id="timer-bar"></div>
                 <div id="word-progress" class="progress-text"></div>
                 <h1 class="word" id="display-word">Trigger</h1>
                 <div id="meaning-container"></div>
             </div>
-            <div id="pre-study-btn"><button id="action-btn" onclick="startVoca()">지금 바로 시작</button></div>
-            <div id="pause-area" style="display:none;" class="ctrl-group">
+            <div id="pre-study-btn"><button onclick="startVoca()">지금 바로 시작</button></div>
+            <div id="pause-area" style="display:none; gap:10px; margin-top:15px;">
                 <button id="pause-btn" onclick="togglePause()">일시 중지</button>
             </div>
         </div>
@@ -91,26 +82,31 @@
         <div class="report-card">
             <p style="color:#888; font-size:0.9rem; margin-bottom:5px;">Trigger Voca Report</p>
             <h2 id="rep-name-title" style="margin-bottom:20px;"></h2>
-            <div class="stat-line"><span>학습 코스</span><b id="rep-course"></b></div>
-            <div class="stat-line"><span>학습 단어</span><b id="rep-count"></b></div>
-            <div class="stat-line"><span>오늘의 세션</span><b id="rep-session"></b></div>
+            <div class="report-stat"><span>학습 코스</span><b id="rep-course"></b></div>
+            <div class="report-stat"><span>학습 단어</span><b id="rep-count"></b></div>
+            <div class="report-stat"><span>오늘의 세션</span><b id="rep-session"></b></div>
             <p style="margin-top:20px; font-weight:bold; color:var(--primary);">"상위 1% 어휘력에 도달했습니다!"</p>
-            <button class="kakao-btn" onclick="shareToKakao()">학부모님께 결과 전송</button>
+            <button class="kakao-btn" onclick="shareToKakao()">💬 학부모님께 결과 전송</button>
             <p onclick="location.reload()" style="margin-top:20px; color:#aaa; cursor:pointer; font-size:0.8rem; text-decoration:underline;">닫기</p>
         </div>
     </div>
 
     <script>
+        // [cite: 2026-03-05] 대표님이 주신 JS 키 적용 완료
+        try {
+            Kakao.init('fbb1520306ffaad0a882e993109a801c'); 
+        } catch(e) { console.error("Kakao SDK Init Error:", e); }
+
         const wordLib = {
             middle: [{word:"appear", meanings:["나타나다", "보이다"], color:"#E8F5E9"}, {word:"happen", meanings:["일어나다", "발생하다"], color:"#E8F5E9"}],
             high: [{word:"analyze", meanings:["분석하다"], color:"#FFF3E0"}, {word:"acquire", meanings:["습득하다", "얻다"], color:"#FFF3E0"}]
         };
 
-        let user = { name: "", phone: "" }, mode = "", isPaused = false, wordIdx = 0, isStudying = false, currentWordTimer = null, cooldownInterval = null;
+        let user = { name: "", phone: "" }, mode = "", isPaused = false, wordIdx = 0, isStudying = false, currentTimer = null, cooldownInterval = null;
 
         window.onload = function() {
-            const savedUser = localStorage.getItem('tv_user_info');
-            if (savedUser) { user = JSON.parse(savedUser); document.getElementById('welcome-msg').innerText = `${user.name}님,`; showView('view-mode'); checkCooldown(); }
+            const saved = localStorage.getItem('tv_user_info');
+            if (saved) { user = JSON.parse(saved); document.getElementById('welcome-msg').innerText = `${user.name}님,`; showView('view-mode'); checkCooldown(); }
             else { showView('view-login'); }
         };
 
@@ -125,7 +121,7 @@
         }
 
         function showView(id) { document.querySelectorAll('.view').forEach(v => v.classList.remove('active')); document.getElementById(id).classList.add('active'); }
-        function goToMain() { isStudying = false; isPaused = false; if(currentWordTimer) clearInterval(currentWordTimer); document.body.style.backgroundColor = 'var(--bg)'; showView('view-mode'); checkCooldown(); }
+        function goToMain() { isStudying = false; isPaused = false; if(currentTimer) clearInterval(currentTimer); document.body.style.backgroundColor = 'var(--bg)'; showView('view-mode'); checkCooldown(); }
         function selectCourse(m) { mode = m; showView('view-study'); document.getElementById('display-word').innerText = "준비해 주세요"; document.getElementById('meaning-container').innerHTML = ""; document.getElementById('pre-study-btn').style.display = 'block'; document.getElementById('pause-area').style.display = 'none'; }
 
         async function startVoca() {
@@ -154,15 +150,14 @@
                 document.body.style.backgroundColor = data.color;
                 const container = document.getElementById('meaning-container');
                 container.innerHTML = data.meanings.map(m => `<div class="meaning">${m}</div>`).join('');
-                let ms = 0; const duration = 6000;
-                if(currentWordTimer) clearInterval(currentWordTimer);
-                currentWordTimer = setInterval(() => {
+                let ms = 0; if(currentTimer) clearInterval(currentTimer);
+                currentTimer = setInterval(() => {
                     if(!isPaused) {
-                        ms += 100; bar.style.width = (ms / duration * 100) + '%';
+                        ms += 100; bar.style.width = (ms / 6000 * 100) + '%';
                         const el = document.querySelectorAll('.meaning');
-                        const activeIdx = Math.floor((ms / duration) * data.meanings.length);
+                        const activeIdx = Math.floor((ms / 6000) * data.meanings.length);
                         el.forEach((e, i) => e.classList.toggle('active', i === activeIdx));
-                        if(ms >= duration) { clearInterval(currentWordTimer); resolve(); }
+                        if(ms >= 6000) { clearInterval(currentTimer); resolve(); }
                     }
                 }, 100);
             });
@@ -181,25 +176,24 @@
             document.getElementById('report-overlay').style.display = 'flex';
         }
 
-        // [cite: 2026-03-05] image_93d7de.png 에러 방지용 2중 전송 로직
+        // [cite: 2026-03-05] 카카오 공식 공유 로직 (v6.9 최종)
         function shareToKakao() {
             const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key));
-            const msg = `[트리거보카] ${user.name} 학생 결과\n- 코스: ${mode === 'middle' ? '중등' : '고등'}\n- 학습량: ${wordLib[mode].length}단어 완수\n- 누적 세션: ${stats.sessions}회\n\n상위 1% 어휘력을 향해 오늘도 한 걸음!`;
-            
-            // 1순위: 클립보드 복사 (무조건 작동)
-            const el = document.createElement('textarea');
-            el.value = msg; document.body.appendChild(el);
-            el.select(); document.execCommand('copy');
-            document.body.removeChild(el);
+            const shareText = `[트리거보카] ${user.name} 학생의 훈련 리포트\n\n오늘의 훈련 결과:\n- 코스: ${mode === 'middle' ? '중등' : '고등'}\n- 학습량: ${wordLib[mode].length}단어 완수\n- 누적 세션: ${stats.sessions}회\n\n상위 1% 어휘력을 향해 오늘도 성공적으로 훈련을 마쳤습니다!`;
 
-            // 2순위: 시스템 공유 시도 (실패 시 에러창 안 띄우고 무시)
-            if (navigator.share) {
-                navigator.share({ title: '학습 리포트', text: msg }).catch(() => {
-                    alert("결과가 복사되었습니다! 카톡에 붙여넣어 전송해주세요.");
+            if (Kakao.isInitialized()) {
+                Kakao.Share.sendDefault({
+                    objectType: 'text',
+                    text: shareText,
+                    link: { mobileWebUrl: window.location.href, webUrl: window.location.href },
                 });
             } else {
-                alert("결과가 복사되었습니다! 카톡에 붙여넣어 전송해주세요.");
+                // 대비용 클립보드 복사 로직 [cite: 2026-03-05]
+                const t = document.createElement('textarea');
+                t.value = shareText; document.body.appendChild(t); t.select();
+                document.execCommand('copy'); document.body.removeChild(t);
+                alert("결과가 복사되었습니다! 카톡창에 붙여넣어 학부모님께 전송해주세요.");
             }
         }
 
