@@ -268,11 +268,11 @@
         /* [cite: 2026-03-05] 학습 카드 본체 (음영 제거 및 잘림 방지) */
         .card {
             position: relative;
-            padding: 70px 15px;
+            padding: 60px 15px;
             border: 4.5px solid var(--dark);
             border-radius: 55px 15px 55px 15px;
             background-color: var(--white);
-            min-height: 300px;
+            min-height: 280px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -448,7 +448,7 @@
         }
         .audio-msg,
 #view-study button {
-    white-space: nowrap;
+    white-space: nowrap !important;
 }
     </style>
 </head>
@@ -492,7 +492,30 @@
             <div class="course-btn-group">
                 <button class="course-btn" onclick="pickCourse('middle')">중등 코스</button>
                 <button class="course-btn" onclick="pickCourse('high')" style="background-color:#2196F3;">고등 코스</button>
-            </div>
+                </div>
+                
+                <div id="today-stats" 
+style="margin-top:25px;padding:20px;border:3px solid #333;border-radius:15px;font-weight:900;background:#fffbe6;">
+📊 오늘 학습
+<div id="streak-alert" style="color:#ff6b4a;margin-bottom:8px;"></div>
+<div id="stat-session"></div>
+<div id="stat-review"></div>
+<div id="stat-star"></div>
+<div id="stat-error"></div>
+<div id="stat-streak"></div>
+</div>
+            
+                <button onclick="reviewTodayWords()" style="margin-top:20px;background:#8BC34A;">
+                    📖 방금 학습 단어 다시보기
+                    </button>
+                    
+                    <button onclick="reviewStarWords()" style="margin-top:15px;background:#FFD54F;color:#333;">
+                        ⭐ 별표 단어 복습
+                        </button>
+                        
+                        <button onclick="reviewErrorWords()" style="margin-top:15px;background:#EF5350;">
+                        ❌ 오답 단어 복습
+                        </button>
 
             <div id="cooldown-area" style="display:none; margin-top:45px; padding:30px; border:4.5px solid #ef6c00; border-radius:25px; font-weight:900; color:#ef6c00; background-color:#fff3e0;"></div>
             
@@ -560,9 +583,15 @@ style="margin-top:20px;background:#FFD54F;color:#333;display:none;">
         --------------------------------------------------------- */
         
         // 카카오 공식 SDK 초기화 [cite: 2026-03-05]
-        try { 
-            Kakao.init('fbb1520306ffaad0a882e993109a801c'); 
-        } catch(e) { console.error("SDK Init Error"); }
+        if (window.Kakao) {
+    try { 
+        Kakao.init('fbb1520306ffaad0a882e993109a801c'); 
+    } catch(e) { 
+        console.error("Kakao SDK initialization error:", e); 
+    }
+} else {
+    console.error("Kakao SDK is not loaded properly.");
+}
 
         // [cite: 2026-03-05] 마스터 단어 데이터
         const library = {
@@ -578,7 +607,10 @@ style="margin-top:20px;background:#FFD54F;color:#333;display:none;">
         
         let user = { name: "" }, mode = "", repeats = 2, isPaused = false, activeStudy = false, muted = false;
         let timerId = null, score = 0, countdownAborted = false, inReview = false;
-        let retryQueue = [];
+let retryQueue = [];
+
+let studyStartTime = 0;
+let todayStudyTime = 0;
 
         let currentSession = 1;
         const MAX_SESSION = 5;
@@ -588,7 +620,12 @@ style="margin-top:20px;background:#FFD54F;color:#333;display:none;">
             const logoView = document.getElementById('view-logo');
             
             setTimeout(() => {
-                const data = localStorage.getItem('tv_user_info');
+                let data = null;
+try {
+    data = localStorage.getItem('tv_user_info');
+} catch (e) {
+    console.error("Error reading from localStorage:", e);
+}
                 if (data) {
                     user = JSON.parse(data);
                     document.getElementById('welcome-msg').innerText = `${user.name}님,🎯`;
@@ -619,19 +656,34 @@ style="margin-top:20px;background:#FFD54F;color:#333;display:none;">
 
         function toggleAudio() { muted = !muted; document.getElementById('mute-btn').innerText = muted ? "🔇" : "🔊"; }
         function playWord(txt) {
-            if (muted) return;
-            const s = new SpeechSynthesisUtterance(txt);
-            s.lang = 'en-US'; s.rate = 0.8;
-            window.speechSynthesis.speak(s);
-        }
+    if (muted) return;
 
-        function changeView(id) {
-            const views = document.querySelectorAll('.view');
-            views.forEach(v => v.classList.remove('active'));
-            const target = document.getElementById(id);
-            if(target) target.classList.add('active');
-            if(id === 'view-study') autoCountdown();
-        }
+    window.speechSynthesis.cancel();  // 기존 음성을 중지
+
+    const s = new SpeechSynthesisUtterance(txt);
+    s.lang = 'en-US';
+    s.rate = 0.8;
+
+    window.speechSynthesis.speak(s);
+}
+        
+
+function changeView(id) {
+    const views = document.querySelectorAll('.view');
+    views.forEach(v => v.classList.remove('active'));
+    const target = document.getElementById(id);
+    if(target) target.classList.add('active');
+    
+    // 쿨타임이 끝난 후 자동으로 공부 세션을 시작하는 부분
+    if(id === 'view-study') {
+        autoCountdown();
+        startCooldown(); // cooldown 시작
+    }
+    
+    if(id === 'view-mode') {
+        updateTodayStats();
+    }
+}
 
         function pickCourse(m) { mode = m; changeView('view-study'); }
 
@@ -720,10 +772,13 @@ launchMainSession();
 
         async function launchMainSession() {
 
+studyStartTime = Date.now();
+
 document.getElementById('word-progress').innerText = "";
 
 const words = library[mode];
 saveDailyWords(words);
+
 
 if(currentSession < MAX_SESSION){
 
@@ -743,8 +798,17 @@ if(currentSession < MAX_SESSION){
 
         function wordCycle(data, time) {
             const star = document.getElementById('star-btn');
-star.style.display = 'block';
+
+star.style.display = "block";
 star.disabled = false;
+
+let pool = JSON.parse(localStorage.getItem('tv_star_pool')||'[]');
+
+if(pool.find(w=>w.word===data.word)){
+star.innerText = "⭐ 저장됨";
+}else{
+star.innerText = "⭐ 별표";
+}
             document.getElementById('timer-bar').style.width = "0%";
             return new Promise(resolve => {
                 const bar = document.getElementById('timer-bar');
@@ -828,7 +892,9 @@ else {
 saveToErrorPool(data);
 
 if(!inReview){
+    if(!retryQueue.find(w=>w.word===data.word)){
 retryQueue.push(data);
+}
 }
 
 }
@@ -959,7 +1025,28 @@ return [...y2,...y1];
         function showFinalReport() {
             const key = `tv_stats_${user.name}_${user.phone}`;
             const stats = JSON.parse(localStorage.getItem(key) || '{"sessions":0, "lastTime":0}');
-            stats.sessions++; stats.lastTime = Date.now();
+            stats.sessions++; 
+stats.lastTime = Date.now();
+
+const sessionTime = Math.floor((Date.now() - studyStartTime) / 1000);
+stats.todayTime = (stats.todayTime || 0) + sessionTime;
+const today = getTodayKey();
+const lastDay = stats.lastDay || "";
+
+if(lastDay !== today){
+
+const yesterday = getDateKey(-1);
+
+if(lastDay === yesterday){
+stats.streak = (stats.streak || 0) + 1;
+}
+else{
+stats.streak = 1;
+}
+
+stats.lastDay = today;
+
+}
             localStorage.setItem(key, JSON.stringify(stats));
             const pct = (score / library[mode].length) * 100;
             document.getElementById('rep-name').innerText = `${user.name}님,🎯`;
@@ -980,19 +1067,30 @@ return [...y2,...y1];
         }
 
         function runCooldownCheck() {
-            const stats = JSON.parse(localStorage.getItem(`tv_stats_${user.name}_${user.phone}`) || '{"sessions":0, "lastTime":0}');
-            const diff = Date.now() - stats.lastTime;
-            if(diff < 600000 && stats.sessions > 0) {
-                const area = document.getElementById('cooldown-area'); area.style.display = 'block';
-                document.getElementById('admin-reset').style.display = 'inline-block';
-                const timer = setInterval(() => {
-                    const rem = 600000 - (Date.now() - stats.lastTime);
-                    if(rem <= 0) { clearInterval(timer); location.reload(); }
-                    else area.innerText = `⏳ 휴식 중: ${Math.floor(rem / 60000)}분 ${Math.floor((rem % 60000) / 1000)}초 남음`;
-                }, 1000);
+    const stats = JSON.parse(localStorage.getItem(`tv_stats_${user.name}_${user.phone}`) || '{"sessions":0, "lastTime":0}');
+    const diff = Date.now() - stats.lastTime;
+    const cooldown = 600000; // 10분
+    if(diff < cooldown && stats.sessions > 0) {
+        const area = document.getElementById('cooldown-area'); area.style.display = 'block';
+        document.getElementById('admin-reset').style.display = 'inline-block';
+        
+        // 10분 쿨타임 후, 세션을 진행
+        const timer = setInterval(() => {
+            const rem = cooldown - (Date.now() - stats.lastTime);
+            if(rem <= 0) { 
+                clearInterval(timer); 
+                location.reload(); 
             }
-        }
-        function forceReset() { localStorage.clear(); location.reload(); }
+            else area.innerText = `⏳ 휴식 중: ${Math.floor(rem / 60000)}분 ${Math.floor((rem % 60000) / 1000)}초 남음`;
+        }, 1000);
+    }
+}
+        function forceReset() { 
+    if (confirm("정말로 데이터를 초기화하시겠습니까?")) {
+        localStorage.clear(); 
+        location.reload(); 
+    }
+}
         async function runSession(words){
 
             document.getElementById('pause-area').style.display = 'flex';
@@ -1007,13 +1105,14 @@ for(let r=0;r<repeats;r++){
     for(let i=0;i<shuffled.length;i++){
 
         playWord(shuffled[i].word);
+setTimeout(()=>playWord(shuffled[i].word),1500);
 
         await wordCycle(shuffled[i],6000);
 
     }
 
 }
-
+document.getElementById('test-box').style.display = "none";
 }
 function toggleStar(){
 
@@ -1023,12 +1122,25 @@ const words = library[mode];
 
 const target = words.find(w=>w.word===word);
 
-if(target){
-saveStar(target);
-document.getElementById('star-btn').disabled = true;
+let pool =
+JSON.parse(localStorage.getItem('tv_star_pool')||'[]');
+
+const idx = pool.findIndex(w=>w.word===word);
+
+if(idx === -1){
+
+pool.push(target);
+document.getElementById('word-progress').innerText = "⭐ 저장됨";
+
+}
+else{
+
+pool.splice(idx,1);
+document.getElementById('word-progress').innerText = "⭐ 해제됨";
+
 }
 
-document.getElementById('word-progress').innerText = "⭐ 저장됨";
+localStorage.setItem('tv_star_pool',JSON.stringify(pool));
 
 }
 
@@ -1046,6 +1158,8 @@ localStorage.setItem('tv_star_pool',JSON.stringify(pool));
 }
 
 function startCooldown(){
+
+changeView('view-mode');
 
 const area = document.getElementById('cooldown-area');
 
@@ -1065,17 +1179,135 @@ const timer = setInterval(()=>{
 
     if(remain <= 0){
 
-        clearInterval(timer);
+clearInterval(timer);
 
-        area.style.display='none';
+area.style.display='none';
 
-        currentSession++;
+currentSession++;
 
-        launchMainSession();
+launchMainSession();
 
-    }
+}
 
 },1000);
+
+}
+
+function reviewTodayWords(){
+
+const key = `tv_daily_words_${getTodayKey()}_${mode}`;
+
+const words =
+JSON.parse(localStorage.getItem(key) || '[]');
+
+if(words.length === 0){
+alert("오늘 학습한 단어가 없습니다.");
+return;
+}
+
+changeView('view-study');
+
+runFreeReview(words);
+
+}
+
+function reviewStarWords(){
+
+const starPool =
+JSON.parse(localStorage.getItem('tv_star_pool') || '[]');
+
+if(starPool.length === 0){
+alert("별표 단어가 없습니다.");
+return;
+}
+
+changeView('view-study');
+
+runFreeReview(starPool);
+
+}
+
+function reviewErrorWords(){
+
+const errorPool =
+JSON.parse(localStorage.getItem('tv_error_pool') || '[]');
+
+if(errorPool.length === 0){
+alert("오답 단어가 없습니다.");
+return;
+}
+
+changeView('view-study');
+
+runFreeReview(errorPool);
+
+}
+
+async function runFreeReview(words){
+
+document.getElementById('pause-area').style.display='none';
+document.getElementById('test-box').style.display='none';
+
+for(let i=0;i<words.length;i++){
+
+document.getElementById('word-progress').innerText =
+`REVIEW ${i+1}/${words.length}`;
+
+await wordCycle(words[i],4000);
+
+}
+
+}
+
+function updateTodayStats(){
+
+if(!mode) return;
+
+const starPool =
+JSON.parse(localStorage.getItem('tv_star_pool')||'[]');
+
+const errorPool =
+JSON.parse(localStorage.getItem('tv_error_pool')||'[]');
+
+const todayKey =
+`tv_daily_words_${getTodayKey()}_${mode}`;
+
+const todayWords =
+JSON.parse(localStorage.getItem(todayKey)||'[]');
+
+document.getElementById('stat-session').innerText =
+`세션 : ${currentSession} / ${MAX_SESSION}`;
+
+document.getElementById('stat-review').innerText =
+`복습 단어 : ${todayWords.length}`;
+
+document.getElementById('stat-star').innerText =
+`⭐ 별표 : ${starPool.length}`;
+
+document.getElementById('stat-error').innerText =
+`❌ 오답 : ${errorPool.length}`;
+
+const stats =
+JSON.parse(localStorage.getItem(`tv_stats_${user.name}_${user.phone}`) || '{}');
+
+document.getElementById('stat-streak').innerText =
+`🔥 연속 학습 : ${stats.streak || 0}일`;
+const minutes = Math.floor((stats.todayTime || 0) / 60);
+
+document.getElementById('stat-review').innerText +=
+` | ⏱ ${minutes}분`;
+
+const today = getTodayKey();
+const lastDay = stats.lastDay || "";
+
+if(lastDay !== today){
+document.getElementById('streak-alert').innerText =
+"⚠️ 오늘 학습 안하면 streak 끊깁니다!";
+}
+else{
+document.getElementById('streak-alert').innerText =
+`🔥 ${stats.streak || 1}일 연속 학습 중!`;
+}
 
 }
     </script>
