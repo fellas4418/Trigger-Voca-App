@@ -581,6 +581,9 @@
         let user = { name: "" }, mode = "", repeats = 2, isPaused = false, activeStudy = false, muted = false;
         let timerId = null, score = 0, countdownAborted = false, inReview = false;
 
+        let currentSession = 1;
+        const MAX_SESSION = 5;
+        const SESSION_COOLDOWN = 600000; // 10분
         /* 로고 진입 자동 전환 로직 고정 (1.9초) */
         window.onload = function() {
             const logoView = document.getElementById('view-logo');
@@ -675,21 +678,24 @@
         }
 
         async function launchMainSession() {
-            document.getElementById('pause-area').style.display = 'flex';
-            document.getElementById('test-box').style.display = 'none';
-            const words = library[mode];
-            for(let i=0; i < words.length; i++) {
-                for(let r=0; r < repeats; r++) {
-                    if(!activeStudy) return;
-                    document.getElementById('word-progress').innerText = `${i+1} / ${words.length} (${r+1}/${repeats}회차)`;
-                    
-                    // [cite: 2026-03-05] 매 회차 발음 재생 고정
-                    playWord(words[i].word);
-                    await wordCycle(words[i], 6000);
-                }
-            }
-            runMasterTest();
-        }
+
+const words = library[mode];
+
+if(currentSession < MAX_SESSION){
+
+    document.getElementById('word-progress').innerText =
+    `SESSION ${currentSession} / 4`;
+
+    await runSession(words);
+
+    startCooldown();
+
+} else {
+
+    runMasterTest();
+
+}
+}
 
         function wordCycle(data, time) {
             return new Promise(resolve => {
@@ -821,6 +827,57 @@
             }
         }
         function forceReset() { localStorage.clear(); location.reload(); }
+        async function runSession(words){
+
+document.getElementById('pause-area').style.display = 'flex';
+
+for(let i=0;i<words.length;i++){
+
+    for(let r=0;r<2;r++){
+
+        playWord(words[i].word);
+
+        await wordCycle(words[i],6000);
+
+    }
+
+}
+
+}
+
+function startCooldown(){
+
+const area = document.getElementById('cooldown-area');
+
+area.style.display = 'block';
+
+let remain = SESSION_COOLDOWN;
+
+const timer = setInterval(()=>{
+
+    remain -= 1000;
+
+    const m = Math.floor(remain/60000);
+    const s = Math.floor((remain%60000)/1000);
+
+    area.innerText =
+    `다음 세션까지 휴식 ⏳ ${m}분 ${s}초`;
+
+    if(remain <= 0){
+
+        clearInterval(timer);
+
+        area.style.display='none';
+
+        currentSession++;
+
+        launchMainSession();
+
+    }
+
+},1000);
+
+}
     </script>
 </body>
 </html>
