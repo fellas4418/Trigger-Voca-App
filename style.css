@@ -1,0 +1,12 @@
+:root { --noun: #38BDF8; --verb: #4ADE80; --adj: #FBBF24; --bg: #0F172A; }
+body { margin: 0; background: var(--bg); color: white; font-family: sans-serif; display: flex; justify-content: center; }
+#app-container { width: 100%; max-width: 480px; height: 100vh; display: flex; flex-direction: column; }
+.timer-bar-bg { width: 100%; height: 6px; background: #334155; }
+#progress-fill { height: 100%; width: 0%; background: #F43F5E; transition: width 0.1s linear; }
+#word-card { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+.card-noun { border-left: 10px solid var(--noun); }
+.card-verb { border-left: 10px solid var(--verb); }
+.card-adj { border-left: 10px solid var(--adj); }
+.m-item { font-size: 1.5rem; opacity: 0.2; margin: 10px; transition: 0.3s; }
+.m-item.active { opacity: 1; font-weight: bold; transform: scale(1.1); }
+#start-btn { width: 90%; margin: 20px auto; padding: 20px; border-radius: 12px; border: none; background: #38BDF8; font-weight: bold; font-size: 1.2rem; }

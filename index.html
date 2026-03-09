@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Trigger Voca 4.5</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app-container">
+        <header class="app-header">
+            <div id="session-label">Session 1</div>
+            <div class="timer-bar-bg"><div id="progress-fill"></div></div>
+            <div id="timer-text">06s</div>
+        </header>
+        <main id="word-card" class="card-default">
+            <h1 id="target-word">준비 완료</h1>
+            <p id="phonetic"></p>
+            <div id="meaning-container"></div>
+        </main>
+        <footer class="app-footer">
+            <button id="start-btn">훈련 시작</button>
+        </footer>
+    </div>
+    <script src="wordData.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
